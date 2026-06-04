@@ -1,9 +1,14 @@
 from skyfield.api import Topos, load
 from config import LAT, LON, ALT, CITY
 from datetime import datetime, timezone, timedelta
+import os
 
-TS  = load.timescale()
-EPH = load('de421.bsp')
+DATA_DIR = os.path.join(os.path.dirname(__file__), '..', 'skyfield_data')
+os.makedirs(DATA_DIR, exist_ok=True)
+
+_loader = load.__class__(DATA_DIR)
+TS  = _loader.timescale()
+EPH = _loader('de421.bsp')
 
 OBS    = Topos(latitude_degrees=LAT, longitude_degrees=LON, elevation_m=ALT)
 TIERRA = EPH['earth']
