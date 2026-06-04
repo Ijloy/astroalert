@@ -1,4 +1,4 @@
-const API = 'http://localhost:5000';
+const API = 'https://astroalert-pgyw.onrender.com';
 
 function getToken() { return localStorage.getItem('token'); }
 function setToken(t) { localStorage.setItem('token', t); }
