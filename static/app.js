@@ -143,6 +143,72 @@ async function cargarConjunciones() {
   } catch { document.getElementById('conjunciones-data').textContent = 'Error al cargar'; }
 }
 
+// LUNAS
+async function cargarLunas() {
+  try {
+    const res  = await fetch(`${API}/api/lunas`);
+    const data = await res.json();
+    document.getElementById('lunas-lista').innerHTML =
+      data.lunas.map(l => `
+        <button class="luna-btn" onclick="verLuna('${l.id}', this)">
+          <img src="${l.imagen}" alt="${l.nombre}" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/100px-FullMoon2010.jpg'">
+          <div class="luna-btn-info">
+            <div class="luna-btn-nombre">${l.nombre}</div>
+            <div class="luna-btn-planeta">${l.planeta}</div>
+          </div>
+        </button>
+      `).join('');
+  } catch {
+    document.getElementById('lunas-lista').textContent = 'Error al cargar';
+  }
+}
+
+async function verLuna(id, btn) {
+  document.querySelectorAll('.luna-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const detalle = document.getElementById('luna-detalle');
+  detalle.innerHTML = '<div class="card-sub" style="text-align:center;padding:20px">Cargando...</div>';
+
+  try {
+    const res  = await fetch(`${API}/api/lunas/${id}`);
+    const l    = await res.json();
+    const d    = l.datos;
+
+    detalle.innerHTML = `
+      <img class="luna-detalle-imagen" src="${l.imagen}" alt="${l.nombre}">
+
+      <div class="luna-seccion">
+        <div class="luna-seccion-titulo">📊 Datos</div>
+        <div class="luna-dato"><span>Diámetro</span><span>${d.diametro_km.toLocaleString()} km</span></div>
+        <div class="luna-dato"><span>Distancia</span><span>${d.distancia_km.toLocaleString()} km</span></div>
+        <div class="luna-dato"><span>Período orbital</span><span>${d.periodo_orbital_dias} días</span></div>
+        <div class="luna-dato"><span>Temp. máx</span><span>${d.temperatura_max}°C</span></div>
+        <div class="luna-dato"><span>Temp. mín</span><span>${d.temperatura_min}°C</span></div>
+        <div class="luna-dato"><span>Gravedad</span><span>${d.gravedad}</span></div>
+        <div class="luna-dato"><span>Atmósfera</span><span>${d.atmosfera}</span></div>
+      </div>
+
+      <div class="luna-seccion">
+        <div class="luna-seccion-titulo">📖 Historia</div>
+        <div class="luna-seccion-texto">${l.historia}</div>
+      </div>
+
+      <div class="luna-seccion">
+        <div class="luna-seccion-titulo">✨ Curiosidades</div>
+        ${l.curiosidades.map(c => `<div class="curiosidad">${c}</div>`).join('')}
+      </div>
+
+      <div class="luna-seccion">
+        <div class="luna-seccion-titulo">🚀 Exploración</div>
+        <div class="luna-seccion-texto">${l.exploracion}</div>
+      </div>
+    `;
+  } catch {
+    detalle.innerHTML = '<div class="card-sub">Error al cargar</div>';
+  }
+}
+
 window.onload = () => {
   if (getToken()) mostrarApp();
 };
