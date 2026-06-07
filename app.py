@@ -10,7 +10,7 @@ from flask import Flask, jsonify, render_template
 from notifications.scheduler import iniciar_scheduler
 from events.eclipses import proximos_eclipses
 from events.conjunciones import proximas_conjunciones
-
+from events.jupiter import lunas_jupiter
 
 
 app = Flask(__name__)
