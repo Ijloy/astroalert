@@ -10,7 +10,8 @@ from flask import Flask, jsonify, render_template
 from notifications.scheduler import iniciar_scheduler
 from events.eclipses import proximos_eclipses
 from events.conjunciones import proximas_conjunciones
-from events.jupiter import lunas_jupiter
+from events.lunas import obtener_lunas, obtener_luna
+
 
 
 app = Flask(__name__)
@@ -75,6 +76,18 @@ def api_conjunciones():
         'ciudad': CITY,
         'conjunciones': proximas_conjunciones()
     })
+
+@app.route('/api/lunas')
+def api_lunas():
+    return jsonify({'lunas': obtener_lunas()})
+
+@app.route('/api/lunas/<luna_id>')
+def api_luna(luna_id):
+    luna = obtener_luna(luna_id)
+    if not luna:
+        return jsonify({'error': 'Luna no encontrada'}), 404
+    return jsonify(luna)
+
 
 
 iniciar_scheduler(app)
