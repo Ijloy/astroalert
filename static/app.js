@@ -23,6 +23,7 @@ function ir(seccion) {
     if (seccion === 'planetas')     cargarPlanetas();
     if (seccion === 'eclipses')     cargarEclipses();
     if (seccion === 'conjunciones') cargarConjunciones();
+    if (seccion === 'lunas')        cargarLunas();
   }
 }
 
