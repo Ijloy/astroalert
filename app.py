@@ -8,6 +8,10 @@ from events.sky import planetas_visibles, proxima_ventana
 from config import LAT, LON, CITY, SECRET_KEY, JWT_SECRET_KEY, DATABASE_URL
 from flask import Flask, jsonify, render_template
 from notifications.scheduler import iniciar_scheduler
+from events.eclipses import proximos_eclipses
+from events.conjunciones import proximas_conjunciones
+
+
 
 app = Flask(__name__)
 @app.route('/web')
@@ -48,6 +52,13 @@ def api_planetas():
     ventana = proxima_ventana()
     return jsonify({'visibles_ahora': False, 'proxima_ventana': ventana, 'ciudad': CITY})
 
+@app.route('/api/eclipses')
+def api_eclipses():
+    return jsonify({
+        'ciudad':   CITY,
+        'eclipses': proximos_eclipses()
+    })
+
 @app.route('/api/eventos')
 def api_eventos():
     pos = posicion_actual()
@@ -57,6 +68,14 @@ def api_eventos():
     return jsonify({'ciudad': CITY,
                     'iss': {'posicion': pos, 'distancia_km': dist},
                     'planetas': {'visibles_ahora': ahora, 'proxima_ventana': ventana}})
+
+@app.route('/api/conjunciones')
+def api_conjunciones():
+    return jsonify({
+        'ciudad': CITY,
+        'conjunciones': proximas_conjunciones()
+    })
+
 
 iniciar_scheduler(app)
 if __name__ == '__main__':

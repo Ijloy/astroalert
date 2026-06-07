@@ -35,7 +35,7 @@ header {
 }
 
 .panel { display: flex; flex-direction: column; gap: 12px; }
-.hidden { display: none; }
+.hidden { display: none !important; }
 
 input {
   background: rgba(255,255,255,0.05);
@@ -71,6 +71,38 @@ button.secondary {
   color: rgba(232,234,240,0.5);
 }
 
+/* NAVEGACIÓN */
+.nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.nav-btn {
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  color: rgba(232,234,240,0.5);
+  font-size: 13px;
+  padding: 10px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background: rgba(125,211,252,0.08);
+  color: #e8eaf0;
+}
+
+.nav-btn.active {
+  background: rgba(125,211,252,0.15);
+  border-color: rgba(125,211,252,0.4);
+  color: #7dd3fc;
+  font-weight: 600;
+}
+
 .card {
   background: rgba(255,255,255,0.04);
   border: 0.5px solid rgba(255,255,255,0.1);
@@ -96,6 +128,13 @@ button.secondary {
   color: rgba(232,234,240,0.45);
   margin-top: 4px;
 }
+
+.conj-item {
+  padding: 10px 0;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+}
+
+.conj-item:last-child { border-bottom: none; }
 
 .loading { color: rgba(232,234,240,0.3); font-size: 13px; }
 .error   { color: #f87171; font-size: 12px; text-align: center; }

@@ -4,20 +4,40 @@ function getToken() { return localStorage.getItem('token'); }
 function setToken(t) { localStorage.setItem('token', t); }
 function removeToken() { localStorage.removeItem('token'); }
 
+// NAVEGACIÓN
+const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones'];
+const cargados  = {};
+
+function ir(seccion) {
+  secciones.forEach(s => {
+    document.getElementById(`sec-${s}`).classList.add('hidden');
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  document.getElementById(`sec-${seccion}`).classList.remove('hidden');
+  event.target.classList.add('active');
+
+  if (!cargados[seccion]) {
+    cargados[seccion] = true;
+    if (seccion === 'iss')          cargarISS();
+    if (seccion === 'planetas')     cargarPlanetas();
+    if (seccion === 'eclipses')     cargarEclipses();
+    if (seccion === 'conjunciones') cargarConjunciones();
+  }
+}
+
+// AUTH
 async function login() {
   const email    = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const error    = document.getElementById('auth-error');
-
-  const res = await fetch(`${API}/api/login`, {
+  const res  = await fetch(`${API}/api/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   });
-
   const data = await res.json();
   if (!res.ok) { error.textContent = data.error; return; }
-
   setToken(data.token);
   mostrarApp();
 }
@@ -26,16 +46,13 @@ async function registro() {
   const email    = document.getElementById('email').value;
   const password = document.getElementById('password').value;
   const error    = document.getElementById('auth-error');
-
-  const res = await fetch(`${API}/api/registro`, {
+  const res  = await fetch(`${API}/api/registro`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
   });
-
   const data = await res.json();
   if (!res.ok) { error.textContent = data.error; return; }
-
   error.style.color = '#34d399';
   error.textContent = 'Cuenta creada. Ahora inicia sesión.';
 }
@@ -49,14 +66,12 @@ function cerrarSesion() {
 function mostrarApp() {
   document.getElementById('login-panel').classList.add('hidden');
   document.getElementById('main-panel').classList.remove('hidden');
-  cargarDatos();
+  cargarISS();
+  cargados['iss'] = true;
 }
 
-async function cargarDatos() {
-  const token = getToken();
-  const headers = { 'Authorization': `Bearer ${token}` };
-
-  // ISS
+// ISS
+async function cargarISS() {
   try {
     const res  = await fetch(`${API}/api/iss`);
     const data = await res.json();
@@ -66,20 +81,19 @@ async function cargarDatos() {
       <div class="card-sub">Lat ${pos.lat} · Lon ${pos.lon} · Alt ${pos.altitud} km</div>
       <div class="card-sub">Velocidad: ${pos.velocidad.toLocaleString()} km/h</div>
     `;
-  } catch {
-    document.getElementById('iss-data').textContent = 'Error al cargar';
-  }
+  } catch { document.getElementById('iss-data').textContent = 'Error al cargar'; }
+}
 
-  // Planetas
+// PLANETAS
+async function cargarPlanetas() {
   try {
     const res  = await fetch(`${API}/api/planetas`);
     const data = await res.json();
-
     if (data.visibles_ahora && data.visibles_ahora.length > 0) {
-      const lista = data.visibles_ahora.map(p =>
-        `<div class="card-value">${p.planeta} — ${p.altitud}° hacia el ${p.direccion}</div>`
-      ).join('');
-      document.getElementById('planetas-data').innerHTML = lista;
+      document.getElementById('planetas-data').innerHTML =
+        data.visibles_ahora.map(p =>
+          `<div class="card-value">${p.planeta} — ${p.altitud}° hacia el ${p.direccion}</div>`
+        ).join('');
     } else if (data.proxima_ventana) {
       const v = data.proxima_ventana;
       document.getElementById('planetas-data').innerHTML = `
@@ -87,12 +101,48 @@ async function cargarDatos() {
         <div class="card-sub">En ${v.en_horas}h · ${v.planetas.map(p => p.planeta).join(', ')}</div>
       `;
     }
-  } catch {
-    document.getElementById('planetas-data').textContent = 'Error al cargar';
-  }
+  } catch { document.getElementById('planetas-data').textContent = 'Error al cargar'; }
 }
 
-// Al cargar la página, ver si hay sesión activa
+// ECLIPSES
+async function cargarEclipses() {
+  try {
+    const res  = await fetch(`${API}/api/eclipses`);
+    const data = await res.json();
+    const proximo = data.eclipses[0];
+    const cr      = proximo.cuenta_regresiva;
+    const visible = proximo.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
+    const icono   = proximo.tipo === 'Solar' ? '☀️' : '🌑';
+    document.getElementById('eclipses-data').innerHTML = `
+      <div class="card-value">${icono} Eclipse ${proximo.tipo} ${proximo.subtipo}</div>
+      <div class="card-value" style="font-size:22px;font-weight:700;color:#7dd3fc;margin:8px 0;">
+        ${cr.dias}d ${cr.horas}h ${cr.mins}m
+      </div>
+      <div class="card-sub">${proximo.fecha_local} · ${visible}</div>
+    `;
+  } catch { document.getElementById('eclipses-data').textContent = 'Error al cargar'; }
+}
+
+// CONJUNCIONES
+async function cargarConjunciones() {
+  try {
+    const res  = await fetch(`${API}/api/conjunciones`);
+    const data = await res.json();
+    if (!data.conjunciones.length) {
+      document.getElementById('conjunciones-data').innerHTML =
+        '<div class="card-sub">Ninguna conjunción notable en los próximos 90 días.</div>';
+      return;
+    }
+    document.getElementById('conjunciones-data').innerHTML =
+      data.conjunciones.map(c => `
+        <div class="conj-item">
+          <div class="card-value">✨ ${c.planeta1} + ${c.planeta2}</div>
+          <div class="card-sub">Separación: ${c.separacion}° · ${c.fecha_local} · ${c.cuenta_regresiva.texto}</div>
+        </div>
+      `).join('');
+  } catch { document.getElementById('conjunciones-data').textContent = 'Error al cargar'; }
+}
+
 window.onload = () => {
   if (getToken()) mostrarApp();
 };

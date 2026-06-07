@@ -14,8 +14,8 @@
       <div class="location">Quito, Ecuador</div>
     </header>
 
+    <!-- LOGIN -->
     <div id="login-panel" class="panel">
-      <h2>Iniciar sesión</h2>
       <input type="email" id="email" placeholder="tu@email.com">
       <input type="password" id="password" placeholder="Contraseña">
       <button onclick="login()">Entrar</button>
@@ -23,18 +23,50 @@
       <p id="auth-error" class="error"></p>
     </div>
 
+    <!-- APP PRINCIPAL -->
     <div id="main-panel" class="panel hidden">
-      <div id="iss-card" class="card">
-        <div class="card-label">🛸 ISS AHORA</div>
-        <div id="iss-data" class="loading">Cargando...</div>
+
+      <!-- NAVEGACIÓN -->
+      <nav class="nav">
+        <button class="nav-btn active" onclick="ir('iss')">🛸 ISS</button>
+        <button class="nav-btn" onclick="ir('planetas')">🪐 Planetas</button>
+        <button class="nav-btn" onclick="ir('eclipses')">🌑 Eclipses</button>
+        <button class="nav-btn" onclick="ir('conjunciones')">✨ Conjunciones</button>
+      </nav>
+
+      <!-- SECCIÓN ISS -->
+      <div id="sec-iss" class="seccion">
+        <div class="card">
+          <div class="card-label">🛸 ISS AHORA</div>
+          <div id="iss-data" class="loading">Cargando...</div>
+        </div>
       </div>
 
-      <div id="planetas-card" class="card">
-        <div class="card-label">🪐 PLANETAS</div>
-        <div id="planetas-data" class="loading">Cargando...</div>
+      <!-- SECCIÓN PLANETAS -->
+      <div id="sec-planetas" class="seccion hidden">
+        <div class="card">
+          <div class="card-label">🪐 PLANETAS VISIBLES</div>
+          <div id="planetas-data" class="loading">Cargando...</div>
+        </div>
       </div>
 
-      <button class="secondary" onclick="cerrarSesion()">Cerrar sesión</button>
+      <!-- SECCIÓN ECLIPSES -->
+      <div id="sec-eclipses" class="seccion hidden">
+        <div class="card">
+          <div class="card-label">🌑 PRÓXIMO ECLIPSE</div>
+          <div id="eclipses-data" class="loading">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- SECCIÓN CONJUNCIONES -->
+      <div id="sec-conjunciones" class="seccion hidden">
+        <div class="card">
+          <div class="card-label">✨ CONJUNCIONES PLANETARIAS</div>
+          <div id="conjunciones-data" class="loading">Cargando...</div>
+        </div>
+      </div>
+
+      <button class="secondary" style="margin-top:12px" onclick="cerrarSesion()">Cerrar sesión</button>
     </div>
 
   </div>

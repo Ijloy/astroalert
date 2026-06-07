@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: astroalert
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: LAT
+        value: 0.18
+      - key: LON
+        value: -78.47
+      - key: ALT
+        value: 2850
+      - key: CITY
+        value: Quito
