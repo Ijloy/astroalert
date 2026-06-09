@@ -4,38 +4,137 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AstroAlert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="app">
 
-    <header>
-      <div class="logo">⬡ ASTROALERT</div>
-      <div class="location">Quito, Ecuador</div>
-    </header>
+  <!-- LOGIN -->
+  <div id="login-panel" class="login-screen">
+    <div class="login-center">
 
-    <!-- LOGIN -->
-    <div id="login-panel" class="panel">
-      <input type="email" id="email" placeholder="tu@email.com">
-      <input type="password" id="password" placeholder="Contraseña">
-      <button onclick="login()">Entrar</button>
-      <button class="secondary" onclick="registro()">Crear cuenta</button>
-      <p id="auth-error" class="error"></p>
+      <div class="logo-container">
+        <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
+            fill="none" stroke="#7dd3fc" stroke-width="5"
+            stroke-linejoin="round"/>
+          <polygon points="60,22 96,42 96,78 60,98 24,78 24,42"
+            fill="none" stroke="#7dd3fc" stroke-width="2" opacity="0.3"
+            stroke-linejoin="round"/>
+        </svg>
+        <div class="login-title">ASTROALERT</div>
+      </div>
+
+      <div class="login-form">
+        <div class="input-group">
+          <label>Ingresar correo electrónico</label>
+          <input type="email" id="email" placeholder="">
+        </div>
+        <div class="input-group">
+          <label>Contraseña</label>
+          <input type="password" id="password" placeholder="">
+        </div>
+        <button class="btn-primary ripple" onclick="login()">Iniciar Sesión</button>
+        <p id="auth-error" class="error"></p>
+        <a class="link-crear" onclick="registro()">Crear Cuenta</a>
+      </div>
+
+    </div>
+  </div>
+
+<!-- REGISTRO -->
+<div id="registro-panel" class="login-screen hidden">
+  <div class="login-center">
+
+    <div class="logo-container">
+      <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
+          fill="none" stroke="#7dd3fc" stroke-width="5" stroke-linejoin="round"/>
+        <polygon points="60,22 96,42 96,78 60,98 24,78 24,42"
+          fill="none" stroke="#7dd3fc" stroke-width="2" opacity="0.3" stroke-linejoin="round"/>
+      </svg>
+      <div class="login-title">ASTROALERT</div>
     </div>
 
-    <!-- APP PRINCIPAL -->
-    <div id="main-panel" class="panel hidden">
+    <div class="login-form">
+      <button class="btn-back" onclick="volverLogin()">← Volver</button>
 
-      <!-- NAVEGACIÓN -->
-      <nav class="nav">
-        <button class="nav-btn active" onclick="ir('iss')">🛸 ISS</button>
-        <button class="nav-btn" onclick="ir('planetas')">🪐 Planetas</button>
-        <button class="nav-btn" onclick="ir('eclipses')">🌑 Eclipses</button>
-        <button class="nav-btn" onclick="ir('lunas')">🌙 Lunas</button>
-        <button class="nav-btn" onclick="ir('conjunciones')">✨ Conjunciones</button>
-      </nav>
+      <div class="input-group">
+        <label>Ingresar Correo Electrónico</label>
+        <input type="email" id="reg-email" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Confirmar Contraseña</label>
+        <input type="password" id="reg-confirmar" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Ingresar Nombre de Usuario</label>
+        <input type="text" id="reg-username" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Fecha de Nacimiento</label>
+        <div class="fecha-row">
+          <input type="number" id="reg-dia"  placeholder="DD"   min="1" max="31">
+          <input type="number" id="reg-mes"  placeholder="MM"   min="1" max="12">
+          <input type="number" id="reg-anio" placeholder="AAAA" min="1900" max="2099">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Número de Teléfono</label>
+        <div class="telefono-row">
+          <select id="reg-codigo" class="select-codigo">
+            <option value="+593">🇪🇨 +593</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+52">🇲🇽 +52</option>
+            <option value="+57">🇨🇴 +57</option>
+            <option value="+51">🇵🇪 +51</option>
+            <option value="+56">🇨🇱 +56</option>
+            <option value="+54">🇦🇷 +54</option>
+            <option value="+55">🇧🇷 +55</option>
+            <option value="+34">🇪🇸 +34</option>
+          </select>
+          <input type="tel" id="reg-telefono" placeholder="0987654321">
+        </div>
+      </div>
 
-      <!-- SECCIÓN ISS -->
+      <button class="btn-primary ripple" onclick="registrarse()">Crear Cuenta</button>
+      <p id="reg-error" class="error"></p>
+    </div>
+
+  </div>
+</div>
+
+
+
+  <!-- APP PRINCIPAL -->
+  <div id="main-panel" class="hidden">
+
+    <header class="topbar">
+      <div class="topbar-logo">
+        <svg viewBox="0 0 40 40" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="20,3 36,12 36,28 20,37 4,28 4,12"
+            fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linejoin="round"/>
+        </svg>
+        <span class="topbar-title">ASTROALERT</span>
+      </div>
+      <div class="topbar-location">Quito, Ecuador</div>
+    </header>
+
+    <nav class="nav">
+      <button class="nav-btn ripple active" onclick="ir('iss', event)">🛸 ISS</button>
+      <button class="nav-btn ripple" onclick="ir('planetas', event)">🪐 Planetas</button>
+      <button class="nav-btn ripple" onclick="ir('eclipses', event)">🌑 Eclipses</button>
+      <button class="nav-btn ripple" onclick="ir('conjunciones', event)">✨ Conjunciones</button>
+      <button class="nav-btn ripple" onclick="ir('lunas', event)">🌙 Lunas</button>
+    </nav>
+
+    <main class="main-content">
+
       <div id="sec-iss" class="seccion">
         <div class="card">
           <div class="card-label">🛸 ISS AHORA</div>
@@ -43,7 +142,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN PLANETAS -->
       <div id="sec-planetas" class="seccion hidden">
         <div class="card">
           <div class="card-label">🪐 PLANETAS VISIBLES</div>
@@ -51,7 +149,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN ECLIPSES -->
       <div id="sec-eclipses" class="seccion hidden">
         <div class="card">
           <div class="card-label">🌑 PRÓXIMO ECLIPSE</div>
@@ -59,7 +156,6 @@
         </div>
       </div>
 
-      <!-- SECCIÓN CONJUNCIONES -->
       <div id="sec-conjunciones" class="seccion hidden">
         <div class="card">
           <div class="card-label">✨ CONJUNCIONES PLANETARIAS</div>
@@ -67,23 +163,23 @@
         </div>
       </div>
 
-      <!-- SECCIÓN LUNAS -->
-    <div id="sec-lunas" class="seccion hidden">
-      <div class="lunas-container">
-        <div class="lunas-lista" id="lunas-lista"></div>
-        <div class="luna-detalle" id="luna-detalle">
-          <div class="card-sub" style="text-align:center;padding:20px">
-            Selecciona una luna para ver su información
+      <div id="sec-lunas" class="seccion hidden">
+        <div class="lunas-container">
+          <div class="lunas-lista" id="lunas-lista"></div>
+          <div class="luna-detalle" id="luna-detalle">
+            <div class="card-sub" style="text-align:center;padding:20px">
+              Selecciona una luna para ver su información
+            </div>
           </div>
         </div>
       </div>
-     </div>
-    </div>
 
-      <button class="secondary" style="margin-top:12px" onclick="cerrarSesion()">Cerrar sesión</button>
-    </div>
+    </main>
+
+    <button class="btn-cerrar ripple" onclick="cerrarSesion()">Cerrar sesión</button>
 
   </div>
+
   <script src="/static/app.js"></script>
 </body>
 </html>

@@ -4,18 +4,34 @@ function getToken() { return localStorage.getItem('token'); }
 function setToken(t) { localStorage.setItem('token', t); }
 function removeToken() { localStorage.removeItem('token'); }
 
+// RIPPLE
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('.ripple');
+  if (!btn) return;
+  const circle = document.createElement('span');
+  const rect   = btn.getBoundingClientRect();
+  const size   = Math.max(rect.width, rect.height);
+  circle.classList.add('ripple-effect');
+  circle.style.width  = circle.style.height = size + 'px';
+  circle.style.left   = e.clientX - rect.left - size/2 + 'px';
+  circle.style.top    = e.clientY - rect.top  - size/2 + 'px';
+  btn.appendChild(circle);
+  setTimeout(() => circle.remove(), 600);
+});
+
+
+
 // NAVEGACIÓN
 const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones'];
 const cargados  = {};
 
-function ir(seccion) {
+function ir(seccion, e) {
   secciones.forEach(s => {
     document.getElementById(`sec-${s}`).classList.add('hidden');
   });
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-
   document.getElementById(`sec-${seccion}`).classList.remove('hidden');
-  event.target.classList.add('active');
+  if (e) e.currentTarget.classList.add('active');
 
   if (!cargados[seccion]) {
     cargados[seccion] = true;
@@ -27,7 +43,17 @@ function ir(seccion) {
   }
 }
 
-// AUTH
+function volverLogin() {
+  document.getElementById('registro-panel').classList.add('hidden');
+  document.getElementById('login-panel').classList.remove('hidden');
+  document.getElementById('reg-error').textContent = '';
+}
+
+function irARegistro() {
+  document.getElementById('login-panel').classList.add('hidden');
+  document.getElementById('registro-panel').classList.remove('hidden');
+}
+
 async function login() {
   const email    = document.getElementById('email').value;
   const password = document.getElementById('password').value;
@@ -43,20 +69,70 @@ async function login() {
   mostrarApp();
 }
 
-async function registro() {
-  const email    = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const error    = document.getElementById('auth-error');
-  const res  = await fetch(`${API}/api/registro`, {
+async function registrarse() {
+  const error = document.getElementById('reg-error');
+  error.textContent = '';
+
+  const email     = document.getElementById('reg-email').value.trim();
+  const password  = document.getElementById('reg-password').value;
+  const confirmar = document.getElementById('reg-confirmar').value;
+  const username  = document.getElementById('reg-username').value.trim();
+  const dia       = document.getElementById('reg-dia').value.padStart(2, '0');
+  const mes       = document.getElementById('reg-mes').value.padStart(2, '0');
+  const anio      = document.getElementById('reg-anio').value;
+  const codigo    = document.getElementById('reg-codigo').value;
+  const telefono  = document.getElementById('reg-telefono').value.trim();
+
+  if (!email || !password || !confirmar) {
+    error.textContent = 'Email y contraseña son requeridos'; return;
+  }
+  if (password !== confirmar) {
+    error.textContent = 'Las contraseñas no coinciden'; return;
+  }
+  if (password.length < 6) {
+    error.textContent = 'La contraseña debe tener al menos 6 caracteres'; return;
+  }
+
+  // Validar fecha
+  let fecha_nacimiento = null;
+  if (dia && mes && anio) {
+    const fechaStr = `${anio}-${mes}-${dia}`;
+    const fecha    = new Date(fechaStr);
+    if (isNaN(fecha.getTime()) || fecha.getMonth() + 1 !== parseInt(mes)) {
+      error.textContent = 'Fecha de nacimiento inválida'; return;
+    }
+    fecha_nacimiento = fechaStr;
+  }
+
+  // Validar teléfono
+  if (telefono && !/^\d{7,15}$/.test(telefono)) {
+    error.textContent = 'Número de teléfono inválido'; return;
+  }
+
+  const res = await fetch(`${API}/api/registro`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
+    body: JSON.stringify({
+      email,
+      password,
+      confirmar_password: confirmar,
+      username,
+      fecha_nacimiento,
+      telefono_codigo: codigo,
+      telefono_numero: telefono,
+    })
   });
+
   const data = await res.json();
   if (!res.ok) { error.textContent = data.error; return; }
-  error.style.color = '#34d399';
-  error.textContent = 'Cuenta creada. Ahora inicia sesión.';
+
+  // Registro exitoso — ir al login
+  volverLogin();
+  document.getElementById('auth-error').style.color = '#34d399';
+  document.getElementById('auth-error').textContent = '¡Cuenta creada! Ahora inicia sesión.';
 }
+
+
 
 function cerrarSesion() {
   removeToken();
