@@ -67,9 +67,17 @@ function irSeccion(seccion) {
 }
 
 function volverMenu() {
-  secciones.forEach(s => document.getElementById(`sec-${s}`) && document.getElementById(`sec-${s}`).classList.add('hidden'));
+  secciones.forEach(s => {
+    const el = document.getElementById(`sec-${s}`);
+    if (el) el.classList.add('hidden');
+  });
+  document.getElementById('luna-detalle').innerHTML = `
+    <div class="card-sub" style="text-align:center;padding:20px">Selecciona una luna</div>
+  `;
+  document.getElementById('lunas-lista').innerHTML = '';
+  Object.keys(cargados).forEach(k => delete cargados[k]);
   document.querySelector('.carrusel-wrapper').style.display = 'block';
-  document.querySelector('.cards-grid').style.display       = 'grid';
+  document.querySelector('.cards-grid').style.display = 'grid';
 }
 
 // ── AUTH ──
@@ -181,7 +189,7 @@ function iniciarCarrusel() {
   }
 
   // Auto-scroll cada 4 segundos
-  setInterval(() => irSlide((actual + 1) % items.length), 4000);
+  setInterval(() => irSlide((actual + 1) % items.length), 8000);
 
   carrusel.addEventListener('scroll', () => {
     const i = Math.round(carrusel.scrollLeft / carrusel.offsetWidth);
