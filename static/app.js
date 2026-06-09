@@ -1,10 +1,10 @@
 const API = 'https://astroalert-pgyw.onrender.com';
 
-function getToken() { return localStorage.getItem('token'); }
-function setToken(t) { localStorage.setItem('token', t); }
+function getToken()    { return localStorage.getItem('token'); }
+function setToken(t)   { localStorage.setItem('token', t); }
 function removeToken() { localStorage.removeItem('token'); }
 
-// RIPPLE
+// ── RIPPLE ──
 document.addEventListener('click', function(e) {
   const btn = e.target.closest('.ripple');
   if (!btn) return;
@@ -19,19 +19,42 @@ document.addEventListener('click', function(e) {
   setTimeout(() => circle.remove(), 600);
 });
 
+// ── SIDEBAR ──
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebar-overlay').classList.toggle('active');
+}
 
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('active');
+}
 
-// NAVEGACIÓN
-const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones'];
+function expandirSub(id) {
+  const sub   = document.getElementById(id);
+  const arrow = document.getElementById('arrow-' + id);
+  sub.classList.toggle('hidden');
+  arrow.classList.toggle('rotado');
+}
+
+// ── NAVEGACIÓN ──
+const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'proximamente'];
 const cargados  = {};
 
-function ir(seccion, e) {
-  secciones.forEach(s => {
-    document.getElementById(`sec-${s}`).classList.add('hidden');
-  });
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`sec-${seccion}`).classList.remove('hidden');
-  if (e) e.currentTarget.classList.add('active');
+function irSeccion(seccion) {
+  closeSidebar();
+
+  // Ocultar carrusel y grid cuando se abre una sección
+  const seccEnContenido = ['iss','planetas','eclipses','conjunciones','lunas'];
+  const tieneContenido  = seccEnContenido.includes(seccion);
+
+  document.querySelector('.carrusel-wrapper').style.display = tieneContenido ? 'none' : 'block';
+  document.querySelector('.cards-grid').style.display       = tieneContenido ? 'none' : 'grid';
+
+  secciones.forEach(s => document.getElementById(`sec-${s}`) && document.getElementById(`sec-${s}`).classList.add('hidden'));
+
+  const secEl = document.getElementById(`sec-${seccion}`) || document.getElementById('sec-proximamente');
+  if (secEl) secEl.classList.remove('hidden');
 
   if (!cargados[seccion]) {
     cargados[seccion] = true;
@@ -43,6 +66,13 @@ function ir(seccion, e) {
   }
 }
 
+function volverMenu() {
+  secciones.forEach(s => document.getElementById(`sec-${s}`) && document.getElementById(`sec-${s}`).classList.add('hidden'));
+  document.querySelector('.carrusel-wrapper').style.display = 'block';
+  document.querySelector('.cards-grid').style.display       = 'grid';
+}
+
+// ── AUTH ──
 function volverLogin() {
   document.getElementById('registro-panel').classList.add('hidden');
   document.getElementById('login-panel').classList.remove('hidden');
@@ -72,70 +102,47 @@ async function login() {
 async function registrarse() {
   const error = document.getElementById('reg-error');
   error.textContent = '';
-
   const email     = document.getElementById('reg-email').value.trim();
   const password  = document.getElementById('reg-password').value;
   const confirmar = document.getElementById('reg-confirmar').value;
   const username  = document.getElementById('reg-username').value.trim();
-  const dia       = document.getElementById('reg-dia').value.padStart(2, '0');
-  const mes       = document.getElementById('reg-mes').value.padStart(2, '0');
+  const dia       = document.getElementById('reg-dia').value.padStart(2,'0');
+  const mes       = document.getElementById('reg-mes').value.padStart(2,'0');
   const anio      = document.getElementById('reg-anio').value;
   const codigo    = document.getElementById('reg-codigo').value;
   const telefono  = document.getElementById('reg-telefono').value.trim();
 
-  if (!email || !password || !confirmar) {
-    error.textContent = 'Email y contraseña son requeridos'; return;
-  }
-  if (password !== confirmar) {
-    error.textContent = 'Las contraseñas no coinciden'; return;
-  }
-  if (password.length < 6) {
-    error.textContent = 'La contraseña debe tener al menos 6 caracteres'; return;
-  }
+  if (!email || !password || !confirmar) { error.textContent = 'Email y contraseña requeridos'; return; }
+  if (password !== confirmar)            { error.textContent = 'Las contraseñas no coinciden'; return; }
+  if (password.length < 6)              { error.textContent = 'Mínimo 6 caracteres'; return; }
 
-  // Validar fecha
   let fecha_nacimiento = null;
   if (dia && mes && anio) {
     const fechaStr = `${anio}-${mes}-${dia}`;
     const fecha    = new Date(fechaStr);
     if (isNaN(fecha.getTime()) || fecha.getMonth() + 1 !== parseInt(mes)) {
-      error.textContent = 'Fecha de nacimiento inválida'; return;
+      error.textContent = 'Fecha inválida'; return;
     }
     fecha_nacimiento = fechaStr;
   }
 
-  // Validar teléfono
-  if (telefono && !/^\d{7,15}$/.test(telefono)) {
-    error.textContent = 'Número de teléfono inválido'; return;
-  }
+  if (telefono && !/^\d{7,15}$/.test(telefono)) { error.textContent = 'Teléfono inválido'; return; }
 
   const res = await fetch(`${API}/api/registro`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email,
-      password,
-      confirmar_password: confirmar,
-      username,
-      fecha_nacimiento,
-      telefono_codigo: codigo,
-      telefono_numero: telefono,
-    })
+    body: JSON.stringify({ email, password, confirmar_password: confirmar, username, fecha_nacimiento, telefono_codigo: codigo, telefono_numero: telefono })
   });
-
   const data = await res.json();
   if (!res.ok) { error.textContent = data.error; return; }
-
-  // Registro exitoso — ir al login
   volverLogin();
   document.getElementById('auth-error').style.color = '#34d399';
   document.getElementById('auth-error').textContent = '¡Cuenta creada! Ahora inicia sesión.';
 }
 
-
-
 function cerrarSesion() {
   removeToken();
+  closeSidebar();
   document.getElementById('main-panel').classList.add('hidden');
   document.getElementById('login-panel').classList.remove('hidden');
 }
@@ -143,23 +150,49 @@ function cerrarSesion() {
 function mostrarApp() {
   document.getElementById('login-panel').classList.add('hidden');
   document.getElementById('registro-panel').classList.add('hidden');
-
-  // Mostrar pantalla de transición
   const transicion = document.getElementById('transicion-panel');
   transicion.classList.remove('hidden');
-
-  // Después de 2 segundos ir al menú
   setTimeout(() => {
     transicion.classList.add('hidden');
     document.getElementById('main-panel').classList.remove('hidden');
-    cargarISS();
-    cargados['iss'] = true;
+    iniciarCarrusel();
   }, 2000);
 }
 
+// ── CARRUSEL ──
+function iniciarCarrusel() {
+  const carrusel = document.getElementById('carrusel');
+  const dots     = document.getElementById('carrusel-dots');
+  const items    = carrusel.querySelectorAll('.carrusel-item');
+  let actual     = 0;
 
+  dots.innerHTML = '';
+  items.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.onclick = () => irSlide(i);
+    dots.appendChild(dot);
+  });
 
-// ISS
+  function irSlide(i) {
+    actual = i;
+    carrusel.scrollTo({ left: carrusel.offsetWidth * i, behavior: 'smooth' });
+    dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+  }
+
+  // Auto-scroll cada 4 segundos
+  setInterval(() => irSlide((actual + 1) % items.length), 4000);
+
+  carrusel.addEventListener('scroll', () => {
+    const i = Math.round(carrusel.scrollLeft / carrusel.offsetWidth);
+    if (i !== actual) {
+      actual = i;
+      dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+    }
+  });
+}
+
+// ── DATOS ──
 async function cargarISS() {
   try {
     const res  = await fetch(`${API}/api/iss`);
@@ -169,135 +202,116 @@ async function cargarISS() {
       <div class="card-value">A <strong>${data.distancia_desde_ciudad.toLocaleString()} km</strong> de Quito</div>
       <div class="card-sub">Lat ${pos.lat} · Lon ${pos.lon} · Alt ${pos.altitud} km</div>
       <div class="card-sub">Velocidad: ${pos.velocidad.toLocaleString()} km/h</div>
+      <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>
     `;
   } catch { document.getElementById('iss-data').textContent = 'Error al cargar'; }
 }
 
-// PLANETAS
 async function cargarPlanetas() {
   try {
     const res  = await fetch(`${API}/api/planetas`);
     const data = await res.json();
+    let html = '';
     if (data.visibles_ahora && data.visibles_ahora.length > 0) {
-      document.getElementById('planetas-data').innerHTML =
-        data.visibles_ahora.map(p =>
-          `<div class="card-value">${p.planeta} — ${p.altitud}° hacia el ${p.direccion}</div>`
-        ).join('');
+      html = data.visibles_ahora.map(p =>
+        `<div class="card-value">${p.planeta} — ${p.altitud}° hacia el ${p.direccion}</div>`
+      ).join('');
     } else if (data.proxima_ventana) {
       const v = data.proxima_ventana;
-      document.getElementById('planetas-data').innerHTML = `
-        <div class="card-value">Próxima ventana: <strong>${v.hora_local}</strong></div>
-        <div class="card-sub">En ${v.en_horas}h · ${v.planetas.map(p => p.planeta).join(', ')}</div>
-      `;
+      html = `<div class="card-value">Próxima ventana: <strong>${v.hora_local}</strong></div>
+              <div class="card-sub">En ${v.en_horas}h · ${v.planetas.map(p => p.planeta).join(', ')}</div>`;
     }
+    document.getElementById('planetas-data').innerHTML = html + `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
   } catch { document.getElementById('planetas-data').textContent = 'Error al cargar'; }
 }
 
-// ECLIPSES
 async function cargarEclipses() {
   try {
     const res  = await fetch(`${API}/api/eclipses`);
     const data = await res.json();
-    const proximo = data.eclipses[0];
-    const cr      = proximo.cuenta_regresiva;
-    const visible = proximo.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
-    const icono   = proximo.tipo === 'Solar' ? '☀️' : '🌑';
+    const p    = data.eclipses[0];
+    const cr   = p.cuenta_regresiva;
+    const vis  = p.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
+    const ico  = p.tipo === 'Solar' ? '☀️' : '🌑';
     document.getElementById('eclipses-data').innerHTML = `
-      <div class="card-value">${icono} Eclipse ${proximo.tipo} ${proximo.subtipo}</div>
-      <div class="card-value" style="font-size:22px;font-weight:700;color:#7dd3fc;margin:8px 0;">
-        ${cr.dias}d ${cr.horas}h ${cr.mins}m
-      </div>
-      <div class="card-sub">${proximo.fecha_local} · ${visible}</div>
+      <div class="card-value">${ico} Eclipse ${p.tipo} ${p.subtipo}</div>
+      <div class="card-value" style="font-size:22px;font-weight:700;color:#7dd3fc;margin:8px 0;">${cr.dias}d ${cr.horas}h ${cr.mins}m</div>
+      <div class="card-sub">${p.fecha_local} · ${vis}</div>
+      <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>
     `;
   } catch { document.getElementById('eclipses-data').textContent = 'Error al cargar'; }
 }
 
-// CONJUNCIONES
 async function cargarConjunciones() {
   try {
     const res  = await fetch(`${API}/api/conjunciones`);
     const data = await res.json();
-    if (!data.conjunciones.length) {
-      document.getElementById('conjunciones-data').innerHTML =
-        '<div class="card-sub">Ninguna conjunción notable en los próximos 90 días.</div>';
-      return;
-    }
-    document.getElementById('conjunciones-data').innerHTML =
-      data.conjunciones.map(c => `
-        <div class="conj-item">
-          <div class="card-value">✨ ${c.planeta1} + ${c.planeta2}</div>
-          <div class="card-sub">Separación: ${c.separacion}° · ${c.fecha_local} · ${c.cuenta_regresiva.texto}</div>
-        </div>
-      `).join('');
+    let html = !data.conjunciones.length
+      ? '<div class="card-sub">Ninguna conjunción notable en los próximos 90 días.</div>'
+      : data.conjunciones.map(c => `
+          <div class="conj-item">
+            <div class="card-value">✨ ${c.planeta1} + ${c.planeta2}</div>
+            <div class="card-sub">Separación: ${c.separacion}° · ${c.fecha_local} · ${c.cuenta_regresiva.texto}</div>
+          </div>`).join('');
+    document.getElementById('conjunciones-data').innerHTML = html + `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
   } catch { document.getElementById('conjunciones-data').textContent = 'Error al cargar'; }
 }
 
-// LUNAS
 async function cargarLunas() {
   try {
     const res  = await fetch(`${API}/api/lunas`);
     const data = await res.json();
     document.getElementById('lunas-lista').innerHTML =
       data.lunas.map(l => `
-        <button class="luna-btn" onclick="verLuna('${l.id}', this)">
-          <img src="${l.imagen}" alt="${l.nombre}" onerror="this.src='https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/FullMoon2010.jpg/100px-FullMoon2010.jpg'">
+        <button class="luna-btn ripple" onclick="verLuna('${l.id}', this)">
+          <img src="${l.imagen}" alt="${l.nombre}" onerror="this.style.display='none'">
           <div class="luna-btn-info">
             <div class="luna-btn-nombre">${l.nombre}</div>
             <div class="luna-btn-planeta">${l.planeta}</div>
           </div>
-        </button>
-      `).join('');
-  } catch {
-    document.getElementById('lunas-lista').textContent = 'Error al cargar';
-  }
+        </button>`).join('') +
+      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:8px">← Volver</button>`;
+  } catch { document.getElementById('lunas-lista').textContent = 'Error al cargar'; }
 }
 
 async function verLuna(id, btn) {
   document.querySelectorAll('.luna-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-
   const detalle = document.getElementById('luna-detalle');
   detalle.innerHTML = '<div class="card-sub" style="text-align:center;padding:20px">Cargando...</div>';
-
   try {
-    const res  = await fetch(`${API}/api/lunas/${id}`);
-    const l    = await res.json();
-    const d    = l.datos;
-
+    const res = await fetch(`${API}/api/lunas/${id}`);
+    const l   = await res.json();
+    const d   = l.datos;
     detalle.innerHTML = `
       <img class="luna-detalle-imagen" src="${l.imagen}" alt="${l.nombre}">
-
       <div class="luna-seccion">
         <div class="luna-seccion-titulo">📊 Datos</div>
         <div class="luna-dato"><span>Diámetro</span><span>${d.diametro_km.toLocaleString()} km</span></div>
         <div class="luna-dato"><span>Distancia</span><span>${d.distancia_km.toLocaleString()} km</span></div>
-        <div class="luna-dato"><span>Período orbital</span><span>${d.periodo_orbital_dias} días</span></div>
+        <div class="luna-dato"><span>Período</span><span>${d.periodo_orbital_dias} días</span></div>
         <div class="luna-dato"><span>Temp. máx</span><span>${d.temperatura_max}°C</span></div>
         <div class="luna-dato"><span>Temp. mín</span><span>${d.temperatura_min}°C</span></div>
         <div class="luna-dato"><span>Gravedad</span><span>${d.gravedad}</span></div>
         <div class="luna-dato"><span>Atmósfera</span><span>${d.atmosfera}</span></div>
       </div>
-
       <div class="luna-seccion">
         <div class="luna-seccion-titulo">📖 Historia</div>
         <div class="luna-seccion-texto">${l.historia}</div>
       </div>
-
       <div class="luna-seccion">
         <div class="luna-seccion-titulo">✨ Curiosidades</div>
         ${l.curiosidades.map(c => `<div class="curiosidad">${c}</div>`).join('')}
       </div>
-
       <div class="luna-seccion">
         <div class="luna-seccion-titulo">🚀 Exploración</div>
         <div class="luna-seccion-texto">${l.exploracion}</div>
       </div>
     `;
-  } catch {
-    detalle.innerHTML = '<div class="card-sub">Error al cargar</div>';
-  }
+  } catch { detalle.innerHTML = '<div class="card-sub">Error al cargar</div>'; }
 }
 
+// ── INIT ──
 window.onload = () => {
   if (getToken()) mostrarApp();
 };
