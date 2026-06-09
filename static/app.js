@@ -142,10 +142,22 @@ function cerrarSesion() {
 
 function mostrarApp() {
   document.getElementById('login-panel').classList.add('hidden');
-  document.getElementById('main-panel').classList.remove('hidden');
-  cargarISS();
-  cargados['iss'] = true;
+  document.getElementById('registro-panel').classList.add('hidden');
+
+  // Mostrar pantalla de transición
+  const transicion = document.getElementById('transicion-panel');
+  transicion.classList.remove('hidden');
+
+  // Después de 2 segundos ir al menú
+  setTimeout(() => {
+    transicion.classList.add('hidden');
+    document.getElementById('main-panel').classList.remove('hidden');
+    cargarISS();
+    cargados['iss'] = true;
+  }, 2000);
 }
+
+
 
 // ISS
 async function cargarISS() {

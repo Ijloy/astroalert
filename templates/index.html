@@ -13,15 +13,11 @@
   <!-- LOGIN -->
   <div id="login-panel" class="login-screen">
     <div class="login-center">
-
       <div class="logo-container">
         <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
           <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
-            fill="none" stroke="#7dd3fc" stroke-width="5"
-            stroke-linejoin="round"/>
-          <polygon points="60,22 96,42 96,78 60,98 24,78 24,42"
-            fill="none" stroke="#7dd3fc" stroke-width="2" opacity="0.3"
-            stroke-linejoin="round"/>
+          fill="none" stroke="#7dd3fc" stroke-width="6"
+          stroke-linejoin="round"/>
         </svg>
         <div class="login-title">ASTROALERT</div>
       </div>
@@ -37,7 +33,7 @@
         </div>
         <button class="btn-primary ripple" onclick="login()">Iniciar Sesión</button>
         <p id="auth-error" class="error"></p>
-        <a class="link-crear" onclick="registro()">Crear Cuenta</a>
+        <a class="link-crear" onclick="irARegistro()">Crear Cuenta</a>
       </div>
 
     </div>
@@ -50,9 +46,8 @@
     <div class="logo-container">
       <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
         <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
-          fill="none" stroke="#7dd3fc" stroke-width="5" stroke-linejoin="round"/>
-        <polygon points="60,22 96,42 96,78 60,98 24,78 24,42"
-          fill="none" stroke="#7dd3fc" stroke-width="2" opacity="0.3" stroke-linejoin="round"/>
+        fill="none" stroke="#7dd3fc" stroke-width="6"
+        stroke-linejoin="round"/>
       </svg>
       <div class="login-title">ASTROALERT</div>
     </div>
@@ -101,14 +96,24 @@
           <input type="tel" id="reg-telefono" placeholder="0987654321">
         </div>
       </div>
-
       <button class="btn-primary ripple" onclick="registrarse()">Crear Cuenta</button>
       <p id="reg-error" class="error"></p>
     </div>
-
   </div>
 </div>
 
+
+<!-- TRANSICIÓN -->
+<div id="transicion-panel" class="login-screen hidden">
+  <div class="login-center" style="gap:24px;">
+    <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
+        fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linejoin="round"/>
+    </svg>
+    <div class="login-title">ASTROALERT</div>
+    <div class="bienvenido-texto">Bienvenido, explorador espacial!</div>
+  </div>
+</div>
 
 
   <!-- APP PRINCIPAL -->
