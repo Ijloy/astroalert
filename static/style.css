@@ -709,3 +709,34 @@ input:focus {
 
 .loading { color: var(--texto-sub); font-size: 13px; font-family: 'Space Mono', monospace; }
 .error   { color: #f87171; font-size: 12px; text-align: center; font-family: 'Inter', sans-serif; }
+
+.luna-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.luna-img-cuadrado {
+  aspect-ratio: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 0.5px solid var(--borde);
+  background: rgba(125,211,252,0.05);
+}
+
+.luna-img-cuadrado img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.luna-datos-cuadrado {
+  background: var(--fondo-card);
+  border: 0.5px solid var(--borde);
+  border-radius: 12px;
+  padding: 14px 12px;
+  aspect-ratio: 1;
+  overflow-y: auto;
+}
+

@@ -244,17 +244,24 @@ async function cargarEclipses() {
   try {
     const res  = await fetch(`${API}/api/eclipses`);
     const data = await res.json();
-    const p    = data.eclipses[0];
-    const cr   = p.cuenta_regresiva;
-    const vis  = p.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
-    const ico  = p.tipo === 'Solar' ? '☀️' : '🌑';
-    document.getElementById('eclipses-data').innerHTML = `
-      <div class="card-value">${ico} Eclipse ${p.tipo} ${p.subtipo}</div>
-      <div class="card-value" style="font-size:22px;font-weight:700;color:#7dd3fc;margin:8px 0;">${cr.dias}d ${cr.horas}h ${cr.mins}m</div>
-      <div class="card-sub">${p.fecha_local} · ${vis}</div>
-      <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>
-    `;
-  } catch { document.getElementById('eclipses-data').textContent = 'Error al cargar'; }
+    const html = data.eclipses.map(e => {
+      const cr  = e.cuenta_regresiva;
+      const vis = e.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
+      const ico = e.tipo === 'Solar' ? '☀️' : '🌑';
+      return `
+        <div class="conj-item">
+          <div class="card-value">${ico} Eclipse ${e.tipo} ${e.subtipo}</div>
+          <div class="card-value" style="font-size:18px;font-weight:700;color:#7dd3fc;margin:4px 0;">
+            ${cr.dias}d ${cr.horas}h ${cr.mins}m
+          </div>
+          <div class="card-sub">${e.fecha_local} · ${vis}</div>
+        </div>`;
+    }).join('');
+    document.getElementById('eclipses-data').innerHTML = html +
+      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
+  } catch(e) {
+    document.getElementById('eclipses-data').textContent = 'Error al cargar';
+  }
 }
 
 async function cargarConjunciones() {
@@ -304,28 +311,35 @@ async function cargarLunas() {
 async function verLuna(id, btn) {
   document.querySelectorAll('.luna-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // Al inicio de verLuna(), después de limpiar detalle:
-  const imgRes = await fetch(`${API}/api/lunas/${id}/imagen`);
-  const imgData = await imgRes.json();
-  const imgUrl = imgData.imagen || l.imagen;
   const detalle = document.getElementById('luna-detalle');
   detalle.innerHTML = '<div class="card-sub" style="text-align:center;padding:20px">Cargando...</div>';
   try {
-    const res = await fetch(`${API}/api/lunas/${id}`);
-    const l   = await res.json();
-    const d   = l.datos;
+    const [resLuna, resImg] = await Promise.all([
+      fetch(`${API}/api/lunas/${id}`),
+      fetch(`${API}/api/lunas/${id}/imagen`)
+    ]);
+    const l      = await resLuna.json();
+    const imgData = await resImg.json();
+    const imgUrl  = imgData.imagen || '';
+    const d       = l.datos;
+
     detalle.innerHTML = `
-      <img class="luna-detalle-imagen" src="${imgUrl}" alt="${l.nombre}">
-      <div class="luna-seccion">
-        <div class="luna-seccion-titulo">📊 Datos</div>
-        <div class="luna-dato"><span>Diámetro</span><span>${d.diametro_km.toLocaleString()} km</span></div>
-        <div class="luna-dato"><span>Distancia</span><span>${d.distancia_km.toLocaleString()} km</span></div>
-        <div class="luna-dato"><span>Período</span><span>${d.periodo_orbital_dias} días</span></div>
-        <div class="luna-dato"><span>Temp. máx</span><span>${d.temperatura_max}°C</span></div>
-        <div class="luna-dato"><span>Temp. mín</span><span>${d.temperatura_min}°C</span></div>
-        <div class="luna-dato"><span>Gravedad</span><span>${d.gravedad}</span></div>
-        <div class="luna-dato"><span>Atmósfera</span><span>${d.atmosfera}</span></div>
+      <div class="luna-top-row">
+        <div class="luna-img-cuadrado">
+          <img src="${imgUrl}" alt="${l.nombre}">
+        </div>
+        <div class="luna-datos-cuadrado">
+          <div class="luna-seccion-titulo" style="margin-bottom:10px">📊 DATOS</div>
+          <div class="luna-dato"><span>Diámetro</span><span>${d.diametro_km.toLocaleString()} km</span></div>
+          <div class="luna-dato"><span>Distancia</span><span>${d.distancia_km.toLocaleString()} km</span></div>
+          <div class="luna-dato"><span>Período</span><span>${d.periodo_orbital_dias} días</span></div>
+          <div class="luna-dato"><span>Temp. máx</span><span>${d.temperatura_max}°C</span></div>
+          <div class="luna-dato"><span>Temp. mín</span><span>${d.temperatura_min}°C</span></div>
+          <div class="luna-dato"><span>Gravedad</span><span>${d.gravedad}</span></div>
+          <div class="luna-dato"><span>Atmósfera</span><span>${d.atmosfera}</span></div>
+        </div>
       </div>
+
       <div class="luna-seccion">
         <div class="luna-seccion-titulo">📖 Historia</div>
         <div class="luna-seccion-texto">${l.historia}</div>
@@ -338,9 +352,14 @@ async function verLuna(id, btn) {
         <div class="luna-seccion-titulo">🚀 Exploración</div>
         <div class="luna-seccion-texto">${l.exploracion}</div>
       </div>
+      <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:8px">← Volver al menú</button>
     `;
-  } catch { detalle.innerHTML = '<div class="card-sub">Error al cargar</div>'; }
+  } catch(e) {
+    detalle.innerHTML = '<div class="card-sub">Error al cargar</div>';
+    console.error(e);
+  }
 }
+
 
 // ── INIT ──
 window.onload = () => {
