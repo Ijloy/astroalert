@@ -88,7 +88,14 @@ def api_luna(luna_id):
         return jsonify({'error': 'Luna no encontrada'}), 404
     return jsonify(luna)
 
+from events.lunas import obtener_lunas, obtener_luna, obtener_imagen_nasa
 
+@app.route('/api/lunas/<luna_id>/imagen')
+def api_luna_imagen(luna_id):
+    img = obtener_imagen_nasa(luna_id)
+    if not img:
+        return jsonify({'error': 'Imagen no encontrada'}), 404
+    return jsonify({'imagen': img})
 
 iniciar_scheduler(app)
 if __name__ == '__main__':

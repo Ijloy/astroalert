@@ -272,19 +272,35 @@ async function cargarLunas() {
     document.getElementById('lunas-lista').innerHTML =
       data.lunas.map(l => `
         <button class="luna-btn ripple" onclick="verLuna('${l.id}', this)">
-          <img src="${l.imagen}" alt="${l.nombre}" onerror="this.style.display='none'">
+          <img id="img-${l.id}" src="" alt="${l.nombre}"
+            style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;background:rgba(125,211,252,0.1)">
           <div class="luna-btn-info">
             <div class="luna-btn-nombre">${l.nombre}</div>
             <div class="luna-btn-planeta">${l.planeta}</div>
           </div>
         </button>`).join('') +
       `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:8px">← Volver</button>`;
+
+    // Cargar imágenes de NASA en paralelo
+    data.lunas.forEach(async l => {
+      try {
+        const r   = await fetch(`${API}/api/lunas/${l.id}/imagen`);
+        const img = await r.json();
+        const el  = document.getElementById(`img-${l.id}`);
+        if (el && img.imagen) el.src = img.imagen;
+      } catch {}
+    });
+
   } catch { document.getElementById('lunas-lista').textContent = 'Error al cargar'; }
 }
 
 async function verLuna(id, btn) {
   document.querySelectorAll('.luna-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  // Al inicio de verLuna(), después de limpiar detalle:
+  const imgRes = await fetch(`${API}/api/lunas/${id}/imagen`);
+  const imgData = await imgRes.json();
+  const imgUrl = imgData.imagen || l.imagen;
   const detalle = document.getElementById('luna-detalle');
   detalle.innerHTML = '<div class="card-sub" style="text-align:center;padding:20px">Cargando...</div>';
   try {
@@ -292,7 +308,7 @@ async function verLuna(id, btn) {
     const l   = await res.json();
     const d   = l.datos;
     detalle.innerHTML = `
-      <img class="luna-detalle-imagen" src="${l.imagen}" alt="${l.nombre}">
+      <img class="luna-detalle-imagen" src="${imgUrl}" alt="${l.nombre}">
       <div class="luna-seccion">
         <div class="luna-seccion-titulo">📊 Datos</div>
         <div class="luna-dato"><span>Diámetro</span><span>${d.diametro_km.toLocaleString()} km</span></div>

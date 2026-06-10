@@ -240,6 +240,45 @@ def obtener_luna(luna_id):
             return l
     return None
 
+import requests as req
+
+NASA_IMAGES = {
+    "luna":     "https://images-api.nasa.gov/search?q=moon+surface&media_type=image",
+    "io":       "https://images-api.nasa.gov/search?q=io+moon+jupiter&media_type=image",
+    "europa":   "https://images-api.nasa.gov/search?q=europa+moon+jupiter&media_type=image",
+    "ganimedes":"https://images-api.nasa.gov/search?q=ganymede+moon&media_type=image",
+    "calisto":  "https://images-api.nasa.gov/search?q=callisto+moon&media_type=image",
+    "titan":    "https://images-api.nasa.gov/search?q=titan+moon+saturn&media_type=image",
+    "encelado": "https://images-api.nasa.gov/search?q=enceladus+moon&media_type=image",
+    "triton":   "https://images-api.nasa.gov/search?q=triton+moon+neptune&media_type=image",
+    "miranda":  "https://images-api.nasa.gov/search?q=miranda+moon+uranus&media_type=image",
+    "caronl":   "https://images-api.nasa.gov/search?q=charon+moon+pluto&media_type=image",
+}
+
+_cache_imagenes = {}
+
+def obtener_imagen_nasa(luna_id):
+    if luna_id in _cache_imagenes:
+        return _cache_imagenes[luna_id]
+    try:
+        url = NASA_IMAGES.get(luna_id)
+        if not url:
+            return None
+        r    = req.get(url, timeout=10)
+        data = r.json()
+        items = data.get('collection', {}).get('items', [])
+        for item in items:
+            links = item.get('links', [])
+            for link in links:
+                if link.get('rel') == 'preview':
+                    img = link.get('href')
+                    _cache_imagenes[luna_id] = img
+                    return img
+    except Exception as e:
+        print(f"Error NASA Images {luna_id}: {e}")
+    return None
+
+
 if __name__ == '__main__':
     print(f'\n{len(LUNAS)} lunas cargadas:\n')
     for l in LUNAS:
