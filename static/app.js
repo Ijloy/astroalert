@@ -220,18 +220,25 @@ async function cargarPlanetas() {
     const res  = await fetch(`${API}/api/planetas`);
     const data = await res.json();
     let html = '';
-    if (data.visibles_ahora && data.visibles_ahora.length > 0) {
-      html = data.visibles_ahora.map(p =>
+    if (data.visibles_ahora && data.planetas && data.planetas.length > 0) {
+      html = data.planetas.map(p =>
         `<div class="card-value">${p.planeta} — ${p.altitud}° hacia el ${p.direccion}</div>`
       ).join('');
     } else if (data.proxima_ventana) {
       const v = data.proxima_ventana;
       html = `<div class="card-value">Próxima ventana: <strong>${v.hora_local}</strong></div>
               <div class="card-sub">En ${v.en_horas}h · ${v.planetas.map(p => p.planeta).join(', ')}</div>`;
+    } else {
+      html = '<div class="card-sub">No hay planetas visibles ahora mismo.</div>';
     }
-    document.getElementById('planetas-data').innerHTML = html + `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
-  } catch { document.getElementById('planetas-data').textContent = 'Error al cargar'; }
+    document.getElementById('planetas-data').innerHTML = html +
+      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
+  } catch (e) {
+    document.getElementById('planetas-data').textContent = 'Error al cargar';
+    console.error(e);
+  }
 }
+
 
 async function cargarEclipses() {
   try {
