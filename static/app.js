@@ -62,9 +62,9 @@ function irSeccion(seccion) {
     if (seccion === 'planetas')     cargarPlanetas();
     if (seccion === 'eclipses')     cargarEclipses();
     if (seccion === 'conjunciones') cargarConjunciones();
-    if (seccion === 'lunas')      
-    if (seccion === 'oposiciones') cargarOposiciones();  cargarLunas();
-  }
+    if (seccion === 'lunas')        cargarLunas();
+    if (seccion === 'oposiciones')  cargarOposiciones();
+}
 }
 
 function volverMenu() {
