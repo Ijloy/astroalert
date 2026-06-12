@@ -45,7 +45,7 @@ function irSeccion(seccion) {
   closeSidebar();
 
   // Ocultar carrusel y grid cuando se abre una sección
-  const seccEnContenido = ['iss','planetas','eclipses','conjunciones','lunas'];
+  const seccEnContenido = ['iss','planetas','eclipses','conjunciones','lunas', 'oposiciones'];
   const tieneContenido  = seccEnContenido.includes(seccion);
 
   document.querySelector('.carrusel-wrapper').style.display = tieneContenido ? 'none' : 'block';
