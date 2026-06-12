@@ -11,6 +11,7 @@ from notifications.scheduler import iniciar_scheduler
 from events.eclipses import proximos_eclipses
 from events.conjunciones import proximas_conjunciones
 from events.lunas import obtener_lunas, obtener_luna
+from events.cometas import obtener_cometas
 
 
 
@@ -106,6 +107,15 @@ def api_oposiciones():
         'ciudad': CITY,
         'oposiciones': proximas_oposiciones()
     })
+
+
+@app.route('/api/cometas')
+def api_cometas():
+    return jsonify({
+        'ciudad':  CITY,
+        'cometas': obtener_cometas()
+    })
+
 
 iniciar_scheduler(app)
 if __name__ == '__main__':
