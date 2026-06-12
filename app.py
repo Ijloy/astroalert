@@ -97,6 +97,16 @@ def api_luna_imagen(luna_id):
         return jsonify({'error': 'Imagen no encontrada'}), 404
     return jsonify({'imagen': img})
 
+
+from events.oposiciones import proximas_oposiciones
+
+@app.route('/api/oposiciones')
+def api_oposiciones():
+    return jsonify({
+        'ciudad': CITY,
+        'oposiciones': proximas_oposiciones()
+    })
+
 iniciar_scheduler(app)
 if __name__ == '__main__':
     app.run(debug=True)

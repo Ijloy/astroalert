@@ -38,7 +38,7 @@ function expandirSub(id) {
 }
 
 // ── NAVEGACIÓN ──
-const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'proximamente'];
+const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'oposiciones', 'proximamente'];
 const cargados  = {};
 
 function irSeccion(seccion) {
@@ -62,7 +62,8 @@ function irSeccion(seccion) {
     if (seccion === 'planetas')     cargarPlanetas();
     if (seccion === 'eclipses')     cargarEclipses();
     if (seccion === 'conjunciones') cargarConjunciones();
-    if (seccion === 'lunas')        cargarLunas();
+    if (seccion === 'lunas')      
+    if (seccion === 'oposiciones') cargarOposiciones();  cargarLunas();
   }
 }
 
@@ -360,6 +361,35 @@ async function verLuna(id, btn) {
   }
 }
 
+
+async function cargarOposiciones() {
+  try {
+    const res  = await fetch(`${API}/api/oposiciones`);
+    const data = await res.json();
+    const html = data.oposiciones.map(o => `
+      <div class="conj-item">
+        <div class="opos-row">
+          <div>
+            <div class="card-value">🔴 ${o.planeta}</div>
+            <div class="card-sub">${o.fecha_local}</div>
+          </div>
+          <div class="opos-badge">${o.cuenta_regresiva.texto}</div>
+        </div>
+        <div class="opos-datos">
+          <span>Distancia: <strong>${o.distancia_ua} UA</strong></span>
+          <span>Elongación: <strong>${o.elongacion}°</strong></span>
+        </div>
+        <div class="card-sub" style="margin-top:6px;font-family:'Inter',sans-serif;font-style:italic">
+          ${o.descripcion}
+        </div>
+      </div>
+    `).join('');
+    document.getElementById('oposiciones-data').innerHTML = html +
+      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
+  } catch(e) {
+    document.getElementById('oposiciones-data').textContent = 'Error al cargar';
+  }
+}
 
 // ── INIT ──
 window.onload = () => {

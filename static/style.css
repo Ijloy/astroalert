@@ -740,3 +740,33 @@ input:focus {
   overflow-y: auto;
 }
 
+
+.opos-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.opos-badge {
+  background: rgba(251,113,133,0.12);
+  border: 0.5px solid rgba(251,113,133,0.3);
+  color: #fb7185;
+  font-size: 12px;
+  font-family: 'Space Mono', monospace;
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.opos-datos {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--texto-sub);
+  font-family: 'Space Mono', monospace;
+}
+
+.opos-datos strong { color: var(--texto); }
+
+
+
