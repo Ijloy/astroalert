@@ -15,23 +15,24 @@ from notifications.scheduler import iniciar_scheduler
 from config import LAT, LON, CITY, SECRET_KEY, JWT_SECRET_KEY, DATABASE_URL
 
 app = Flask(__name__)
-@app.route('/web')
-def web():
-    return render_template('index.html')
 CORS(app)
 
-app.config['SECRET_KEY']                  = SECRET_KEY
-app.config['JWT_SECRET_KEY']              = JWT_SECRET_KEY
-app.config['SQLALCHEMY_DATABASE_URI']     = DATABASE_URL
+app.config['SECRET_KEY']                     = SECRET_KEY
+app.config['JWT_SECRET_KEY']                 = JWT_SECRET_KEY
+app.config['SQLALCHEMY_DATABASE_URI']        = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 bcrypt.init_app(app)
 JWTManager(app)
-app.register_blueprint(auth_bp) 
+app.register_blueprint(auth_bp)
 
 with app.app_context():
     db.create_all()
+
+@app.route('/web')
+def web():
+    return render_template('index.html')
 
 @app.route('/')
 def inicio():
@@ -41,7 +42,7 @@ def inicio():
 
 @app.route('/api/iss')
 def api_iss():
-    pos = posicion_actual()
+    pos  = posicion_actual()
     dist = distancia_km(LAT, LON, pos['lat'], pos['lon'])
     return jsonify({'posicion': pos, 'distancia_desde_ciudad': dist, 'ciudad': CITY})
 
@@ -55,27 +56,21 @@ def api_planetas():
 
 @app.route('/api/eclipses')
 def api_eclipses():
-    return jsonify({
-        'ciudad':   CITY,
-        'eclipses': proximos_eclipses()
-    })
+    return jsonify({'ciudad': CITY, 'eclipses': proximos_eclipses()})
 
 @app.route('/api/eventos')
 def api_eventos():
-    pos = posicion_actual()
-    dist = distancia_km(LAT, LON, pos['lat'], pos['lon'])
-    ahora = planetas_visibles()
+    pos     = posicion_actual()
+    dist    = distancia_km(LAT, LON, pos['lat'], pos['lon'])
+    ahora   = planetas_visibles()
     ventana = proxima_ventana() if not ahora else None
     return jsonify({'ciudad': CITY,
-                    'iss': {'posicion': pos, 'distancia_km': dist},
+                    'iss':      {'posicion': pos, 'distancia_km': dist},
                     'planetas': {'visibles_ahora': ahora, 'proxima_ventana': ventana}})
 
 @app.route('/api/conjunciones')
 def api_conjunciones():
-    return jsonify({
-        'ciudad': CITY,
-        'conjunciones': proximas_conjunciones()
-    })
+    return jsonify({'ciudad': CITY, 'conjunciones': proximas_conjunciones()})
 
 @app.route('/api/lunas')
 def api_lunas():
@@ -95,22 +90,13 @@ def api_luna_imagen(luna_id):
         return jsonify({'error': 'Imagen no encontrada'}), 404
     return jsonify({'imagen': img})
 
-
-
 @app.route('/api/oposiciones')
 def api_oposiciones():
-    return jsonify({
-        'ciudad': CITY,
-        'oposiciones': proximas_oposiciones()
-    })
-
+    return jsonify({'ciudad': CITY, 'oposiciones': proximas_oposiciones()})
 
 @app.route('/api/cometas')
 def api_cometas():
-    return jsonify({
-        'ciudad':  CITY,
-        'cometas': obtener_cometas()
-    })
+    return jsonify({'ciudad': CITY, 'cometas': obtener_cometas()})
 
 @app.route('/api/telescopio', methods=['POST'])
 def api_telescopio():
@@ -138,5 +124,6 @@ def api_telescopio():
         return jsonify({'error': str(e)}), 500
 
 iniciar_scheduler(app)
+
 if __name__ == '__main__':
     app.run(debug=True)
