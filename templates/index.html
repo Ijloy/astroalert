@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroAlert</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- LOGIN -->
+  <div id="login-panel" class="login-screen">
+    <div class="login-center">
+      <div class="logo-container">
+        <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
+          fill="none" stroke="#7dd3fc" stroke-width="6"
+          stroke-linejoin="round"/>
+        </svg>
+        <div class="login-title">ASTROALERT</div>
+      </div>
+
+      <div class="login-form">
+        <div class="input-group">
+          <label>Ingresar correo electrónico</label>
+          <input type="email" id="email" placeholder="">
+        </div>
+        <div class="input-group">
+          <label>Contraseña</label>
+          <input type="password" id="password" placeholder="">
+        </div>
+        <button class="btn-primary ripple" onclick="login()">Iniciar Sesión</button>
+        <p id="auth-error" class="error"></p>
+        <a class="link-crear" onclick="irARegistro()">Crear Cuenta</a>
+      </div>
+
+    </div>
+  </div>
+
+<!-- REGISTRO -->
+<div id="registro-panel" class="login-screen hidden">
+  <div class="login-center">
+
+    <div class="logo-container">
+      <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
+        fill="none" stroke="#7dd3fc" stroke-width="6"
+        stroke-linejoin="round"/>
+      </svg>
+      <div class="login-title">ASTROALERT</div>
+    </div>
+
+    <div class="login-form">
+      <button class="btn-back" onclick="volverLogin()">← Volver</button>
+
+      <div class="input-group">
+        <label>Ingresar Correo Electrónico</label>
+        <input type="email" id="reg-email" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Contraseña</label>
+        <input type="password" id="reg-password" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Confirmar Contraseña</label>
+        <input type="password" id="reg-confirmar" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Ingresar Nombre de Usuario</label>
+        <input type="text" id="reg-username" placeholder="">
+      </div>
+      <div class="input-group">
+        <label>Fecha de Nacimiento</label>
+        <div class="fecha-row">
+          <input type="number" id="reg-dia"  placeholder="DD"   min="1" max="31">
+          <input type="number" id="reg-mes"  placeholder="MM"   min="1" max="12">
+          <input type="number" id="reg-anio" placeholder="AAAA" min="1900" max="2099">
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Número de Teléfono</label>
+        <div class="telefono-row">
+          <select id="reg-codigo" class="select-codigo">
+            <option value="+593">🇪🇨 +593</option>
+            <option value="+1">🇺🇸 +1</option>
+            <option value="+52">🇲🇽 +52</option>
+            <option value="+57">🇨🇴 +57</option>
+            <option value="+51">🇵🇪 +51</option>
+            <option value="+56">🇨🇱 +56</option>
+            <option value="+54">🇦🇷 +54</option>
+            <option value="+55">🇧🇷 +55</option>
+            <option value="+34">🇪🇸 +34</option>
+          </select>
+          <input type="tel" id="reg-telefono" placeholder="0987654321">
+        </div>
+      </div>
+      <button class="btn-primary ripple" onclick="registrarse()">Crear Cuenta</button>
+      <p id="reg-error" class="error"></p>
+    </div>
+  </div>
+</div>
+
+
+<!-- TRANSICIÓN -->
+<div id="transicion-panel" class="login-screen hidden">
+  <div class="login-center" style="gap:24px;">
+    <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
+        fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linejoin="round"/>
+    </svg>
+    <div class="login-title">ASTROALERT</div>
+    <div class="bienvenido-texto">Bienvenido, explorador espacial!</div>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="main-panel" class="hidden">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <button class="topbar-menu-btn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 40 40" width="28" height="28" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="20,3 36,12 36,28 20,37 4,28 4,12"
+          fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <span class="topbar-title">ASTROALERT</span>
+    <div class="topbar-location">Quito, Ecuador</div>
+  </header>
+
+  <!-- SIDEBAR -->
+  <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
+  <nav id="sidebar" class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Eventos</div>
+      <button class="sidebar-item" onclick="irSeccion('eclipses')">🌑 Eclipses solares y lunares</button>
+      <button class="sidebar-item" onclick="irSeccion('conjunciones')">✨ Conjunciones planetarias</button>
+      <button class="sidebar-item" onclick="expandirSub('lunas-sub')">🌙 Lunas de Júpiter <span class="sidebar-arrow" id="arrow-lunas-sub">›</span></button>
+      <div class="sidebar-sub hidden" id="lunas-sub">
+        <button class="sidebar-subitem" onclick="irSeccion('lunas')">Lunas visibles con binoculares</button>
+        <button class="sidebar-subitem" onclick="irSeccion('lunas')">Posición en tiempo real</button>
+      </div>
+      <button class="sidebar-item" onclick="irSeccion('oposiciones')">🔴 Oposiciones de planetas</button>
+      <button class="sidebar-item" onclick="irSeccion('cometas')">☄️ Cometas con efemérides</button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Herramientas</div>
+      <button class="sidebar-item" onclick="expandirSub('herramientas-sub')">🔭 Herramientas <span class="sidebar-arrow" id="arrow-herramientas-sub">›</span></button>
+      <div class="sidebar-sub hidden" id="herramientas-sub">
+        <button class="sidebar-subitem" onclick="irSeccion('mapa')">Mapa del cielo</button>
+        <button class="sidebar-subitem" onclick="irSeccion('telescopio')">Calculadora de telescopio</button>
+        <button class="sidebar-subitem" onclick="irSeccion('diario')">Diario del astrónomo</button>
+        <button class="sidebar-subitem" onclick="irSeccion('condiciones')">Condiciones de observación</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Comunidad</div>
+      <button class="sidebar-item" onclick="expandirSub('comunidad-sub')">👥 Comunidad <span class="sidebar-arrow" id="arrow-comunidad-sub">›</span></button>
+      <div class="sidebar-sub hidden" id="comunidad-sub">
+        <button class="sidebar-subitem" onclick="irSeccion('foros')">Foros por ciudad</button>
+        <button class="sidebar-subitem" onclick="irSeccion('fotos')">Compartir observaciones</button>
+        <button class="sidebar-subitem" onclick="irSeccion('grupos')">Grupos de observación</button>
+        <button class="sidebar-subitem" onclick="irSeccion('ranking')">Ranking de observadores</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Educación</div>
+      <button class="sidebar-item" onclick="expandirSub('educacion-sub')">📚 Educación <span class="sidebar-arrow" id="arrow-educacion-sub">›</span></button>
+      <div class="sidebar-sub hidden" id="educacion-sub">
+        <button class="sidebar-subitem" onclick="irSeccion('guias')">Guías para principiantes</button>
+        <button class="sidebar-subitem" onclick="irSeccion('constelaciones')">Identificador de constelaciones</button>
+        <button class="sidebar-subitem" onclick="irSeccion('quiz')">Quiz — ¿qué planeta es este?</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <button class="sidebar-item" onclick="cerrarSesion()">← Cerrar sesión</button>
+    </div>
+  </nav>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="main-content">
+
+    <!-- BANNER CARRUSEL HORIZONTAL -->
+    <div class="carrusel-wrapper">
+      <div class="carrusel" id="carrusel">
+        <div class="carrusel-item" onclick="irSeccion('eclipses')">
+          <div class="carrusel-label">PRÓXIMO EVENTO</div>
+          <div class="carrusel-titulo">🌑 Eclipse Solar Total</div>
+          <div class="carrusel-sub">12 Ago 2026 · En 68 días</div>
+        </div>
+        <div class="carrusel-item" onclick="irSeccion('iss')">
+          <div class="carrusel-label">EN TIEMPO REAL</div>
+          <div class="carrusel-titulo">🛸 ISS en vivo</div>
+          <div class="carrusel-sub">Posición y distancia desde Quito</div>
+        </div>
+        <div class="carrusel-item" onclick="irSeccion('conjunciones')">
+          <div class="carrusel-label">ESTA SEMANA</div>
+          <div class="carrusel-titulo">✨ Venus + Júpiter</div>
+          <div class="carrusel-sub">Conjunción en 3 días · Separación 1.65°</div>
+        </div>
+        <div class="carrusel-item" onclick="irSeccion('lunas')">
+          <div class="carrusel-label">EXPLORAR</div>
+          <div class="carrusel-titulo">🌙 Lunas del Sistema Solar</div>
+          <div class="carrusel-sub">Io, Europa, Titán, Caronte y más</div>
+        </div>
+      </div>
+      <div class="carrusel-dots" id="carrusel-dots"></div>
+    </div>
+
+    <!-- GRID VERTICAL DE TARJETAS -->
+    <div class="cards-grid">
+      <div class="grid-card" onclick="irSeccion('iss')">
+        <div class="grid-card-icon">🛸</div>
+        <div class="grid-card-title">ISS Ahora</div>
+        <div class="grid-card-sub">Posición en tiempo real</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('planetas')">
+        <div class="grid-card-icon">🪐</div>
+        <div class="grid-card-title">Planetas</div>
+        <div class="grid-card-sub">Visibles desde Quito</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('eclipses')">
+        <div class="grid-card-icon">🌑</div>
+        <div class="grid-card-title">Eclipses</div>
+        <div class="grid-card-sub">Con cuenta regresiva</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('conjunciones')">
+        <div class="grid-card-icon">✨</div>
+        <div class="grid-card-title">Conjunciones</div>
+        <div class="grid-card-sub">Planetas que se acercan</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('lunas')">
+        <div class="grid-card-icon">🌙</div>
+        <div class="grid-card-title">Lunas</div>
+        <div class="grid-card-sub">Sistema solar</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('telescopio')">
+        <div class="grid-card-icon">🔭</div>
+        <div class="grid-card-title">Telescopio</div>
+        <div class="grid-card-sub">Calculadora</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('diario')">
+        <div class="grid-card-icon">📓</div>
+        <div class="grid-card-title">Diario</div>
+        <div class="grid-card-sub">Mis observaciones</div>
+      </div>
+      <div class="grid-card" onclick="irSeccion('quiz')">
+        <div class="grid-card-icon">🎯</div>
+        <div class="grid-card-title">Quiz</div>
+        <div class="grid-card-sub">¿Qué planeta es este?</div>
+      </div>
+    </div>
+
+    <!-- SECCIONES DE CONTENIDO -->
+    <div id="sec-iss" class="seccion hidden">
+      <div class="card">
+        <div class="card-label">🛸 ISS AHORA</div>
+        <div id="iss-data" class="loading">Cargando...</div>
+      </div>
+    </div>
+    <div id="sec-planetas" class="seccion hidden">
+      <div class="card">
+        <div class="card-label">🪐 PLANETAS VISIBLES</div>
+        <div id="planetas-data" class="loading">Cargando...</div>
+      </div>
+    </div>
+    <div id="sec-eclipses" class="seccion hidden">
+      <div class="card">
+        <div class="card-label">🌑 PRÓXIMO ECLIPSE</div>
+        <div id="eclipses-data" class="loading">Cargando...</div>
+      </div>
+    </div>
+    <div id="sec-conjunciones" class="seccion hidden">
+      <div class="card">
+        <div class="card-label">✨ CONJUNCIONES PLANETARIAS</div>
+        <div id="conjunciones-data" class="loading">Cargando...</div>
+      </div>
+    </div>
+    <div id="sec-lunas" class="seccion hidden">
+      <div class="lunas-container">
+        <div class="lunas-lista" id="lunas-lista"></div>
+        <div class="luna-detalle" id="luna-detalle">
+          <div class="card-sub" style="text-align:center;padding:20px">Selecciona una luna</div>
+        </div>
+      </div>
+    </div>
+    <div id="sec-proximamente" class="seccion hidden">
+      <div class="card" style="text-align:center;padding:40px 20px;">
+        <div style="font-size:32px;margin-bottom:12px;">🚀</div>
+        <div class="card-value">Próximamente</div>
+        <div class="card-sub" style="margin-top:8px;">Esta sección está en desarrollo</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="sec-oposiciones" class="seccion hidden">
+  <div class="card">
+    <div class="card-label">🔴 OPOSICIONES PLANETARIAS</div>
+    <div id="oposiciones-data" class="loading">Cargando...</div>
+  </div>
+</div>
+
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
