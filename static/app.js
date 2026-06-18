@@ -38,14 +38,14 @@ function expandirSub(id) {
 }
 
 // ── NAVEGACIÓN ──
-const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'oposiciones', 'proximamente'];
+const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'oposiciones', 'telescopio', 'proximamente'];
 const cargados  = {};
 
 function irSeccion(seccion) {
   closeSidebar();
 
   // Ocultar carrusel y grid cuando se abre una sección
-  const seccEnContenido = ['iss','planetas','eclipses','conjunciones','lunas', 'oposiciones'];
+  const seccEnContenido = ['iss','planetas','eclipses','conjunciones','lunas', 'oposiciones', 'telescopio'];
   const tieneContenido  = seccEnContenido.includes(seccion);
 
   document.querySelector('.carrusel-wrapper').style.display = tieneContenido ? 'none' : 'block';
@@ -390,6 +390,59 @@ async function cargarOposiciones() {
     document.getElementById('oposiciones-data').textContent = 'Error al cargar';
   }
 }
+
+async function calcularTelescopio() {
+  const apertura  = document.getElementById('tel-apertura').value;
+  const focal     = document.getElementById('tel-focal').value;
+  const ocular    = document.getElementById('tel-ocular').value;
+  const afov      = document.getElementById('tel-afov').value || 52;
+
+  if (!apertura || !focal || !ocular) {
+    alert('Ingresa apertura, focal del telescopio y focal del ocular');
+    return;
+  }
+
+  try {
+    const res  = await fetch(`${API}/api/telescopio`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apertura_mm:         parseFloat(apertura),
+        focal_telescopio_mm: parseFloat(focal),
+        focal_ocular_mm:     parseFloat(ocular),
+        afov:                parseFloat(afov)
+      })
+    });
+    const data = await res.json();
+    const r    = data.resultados;
+
+    document.getElementById('tel-mag').textContent    = r.magnificacion + 'x';
+    document.getElementById('tel-campo').textContent  = r.campo_visual + '°';
+    document.getElementById('tel-pupila').textContent = r.pupila_salida + 'mm';
+    document.getElementById('tel-limite').textContent = r.limite_magnitud;
+    document.getElementById('tel-min').textContent    = r.mag_minima_util + 'x';
+    document.getElementById('tel-max').textContent    = r.mag_maxima_util + 'x';
+
+    document.getElementById('tel-objetos').textContent =
+      data.objetos_recomendados.join(' · ');
+
+    const advBox = document.getElementById('tel-advertencias-box');
+    if (data.advertencias.length > 0) {
+      document.getElementById('tel-advertencias').innerHTML =
+        data.advertencias.map(a => `<div class="curiosidad" style="border-color:rgba(251,113,133,0.4)">${a}</div>`).join('');
+      advBox.classList.remove('hidden');
+    } else {
+      advBox.classList.add('hidden');
+    }
+
+    document.getElementById('telescopio-resultado').classList.remove('hidden');
+  } catch(e) {
+    console.error(e);
+    alert('Error al calcular');
+  }
+}
+
+
 
 // ── INIT ──
 window.onload = () => {

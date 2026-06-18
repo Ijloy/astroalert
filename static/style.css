@@ -758,6 +758,43 @@ input:focus {
   border-radius: 20px;
 }
 
+.telescopio-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.tel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.tel-dato-card {
+  background: rgba(125,211,252,0.05);
+  border: 0.5px solid rgba(125,211,252,0.15);
+  border-radius: 10px;
+  padding: 12px 10px;
+  text-align: center;
+}
+
+.tel-dato-valor {
+  font-size: 18px;
+  font-weight: 700;
+  font-family: 'Space Mono', monospace;
+  color: var(--azul);
+  margin-bottom: 4px;
+}
+
+.tel-dato-label {
+  font-size: 10px;
+  color: var(--texto-sub);
+  font-family: 'Inter', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 .opos-datos {
   display: flex;
   gap: 16px;
