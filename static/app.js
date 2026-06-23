@@ -42,6 +42,10 @@ const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'opos
 const cargados  = {};
 
 function irSeccion(seccion) {
+      document.querySelectorAll('.nav-revista-item').forEach(b => b.classList.remove('active'));
+      const navBtn = Array.from(document.querySelectorAll('.nav-revista-item'))
+        .find(b => b.getAttribute('onclick')?.includes(`'${seccion}'`));
+      if (navBtn) navBtn.classList.add('active');
   closeSidebar();
 
   // Ocultar carrusel y grid cuando se abre una sección
@@ -442,6 +446,43 @@ async function calcularTelescopio() {
   }
 }
 
+
+// ── FONDO ESPACIAL ──
+const ICONOS_ESPACIO = [
+  // Estrella simple
+  `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5z"/></svg>`,
+  // Planeta con anillo
+  `<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="11" ry="3"/></svg>`,
+  // Cometa
+  `<svg viewBox="0 0 24 24" width="26" height="26"><circle cx="17" cy="7" r="3"/><path d="M14 10 L4 20 M12 8 L2 18 M16 12 L6 22"/></svg>`,
+  // Luna creciente
+  `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 4a8 8 0 100 16 8 8 0 01-8-8 8 8 0 018-8z"/></svg>`,
+  // Cohete
+  `<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2c2 2 3 5 3 9s-1 7-3 9c-2-2-3-5-3-9s1-7 3-9z"/><path d="M9 14l-3 3v3l3-1M15 14l3 3v3l-3-1"/></svg>`,
+  // Cruz pequeña (estrella diminuta)
+  `<svg viewBox="0 0 24 24" width="10" height="10"><path d="M12 4v16M4 12h16"/></svg>`,
+  // Sol
+  `<svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>`,
+  // Satélite
+  `<svg viewBox="0 0 24 24" width="24" height="24"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 11H4M15 11h5M9 13H4M15 13h5"/><path d="M5 5l3 3M19 5l-3 3"/></svg>`,
+];
+
+function generarFondoEspacial() {
+  const bg = document.getElementById('space-bg');
+  if (!bg) return;
+  const cantidad = 22;
+  let html = '';
+  for (let i = 0; i < cantidad; i++) {
+    const icono = ICONOS_ESPACIO[Math.floor(Math.random() * ICONOS_ESPACIO.length)];
+    const top   = Math.random() * 100;
+    const left  = Math.random() * 100;
+    const rot   = Math.random() * 360;
+    html += `<div style="position:absolute;top:${top}%;left:${left}%;transform:rotate(${rot}deg)">${icono}</div>`;
+  }
+  bg.innerHTML = html;
+}
+
+generarFondoEspacial();
 
 
 // ── INIT ──

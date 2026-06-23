@@ -116,6 +116,85 @@ input:focus {
   overflow: hidden;
 }
 
+.topbar-revista {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: rgba(4,6,15,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 0.5px solid var(--borde);
+}
+
+.topbar-fila-superior {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px 10px;
+}
+
+.topbar-titulo-grande {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: var(--azul);
+}
+
+.topbar-acciones { display: flex; align-items: center; gap: 10px; }
+
+.topbar-location-small {
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  color: var(--texto-sub);
+}
+
+.topbar-nav-revista {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 0 16px 10px;
+  scrollbar-width: none;
+}
+
+.topbar-nav-revista::-webkit-scrollbar { display: none; }
+
+.nav-revista-item {
+  background: none;
+  border: none;
+  color: var(--texto-sub);
+  font-size: 12px;
+  font-family: 'Inter', sans-serif;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.nav-revista-item:hover { color: var(--texto); }
+
+.nav-revista-item.active {
+  color: var(--azul);
+  border-bottom-color: var(--azul);
+  font-weight: 600;
+}
+
+.space-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.12;
+  overflow: hidden;
+}
+
+.space-bg svg {
+  position: absolute;
+  stroke: #7dd3fc;
+  fill: none;
+  stroke-width: 1.2;
+}
+
 .btn-primary:hover {
   background: rgba(125,211,252,0.25);
   box-shadow: 0 0 20px rgba(125,211,252,0.2);
