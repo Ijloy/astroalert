@@ -950,4 +950,427 @@ input:focus {
 .opos-datos strong { color: var(--texto); }
 
 
+/* ════════════════════════════════════
+   GLASSMORPHISM — efecto vidrio esmerilado
+   ════════════════════════════════════ */
+.glass {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+}
+
+
+/* ════════════════════════════════════
+   HERO
+   ════════════════════════════════════ */
+.main-content-v2 {
+  padding: 0;
+}
+
+.hero {
+  position: relative;
+  min-height: 520px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 0 0 24px 24px;
+}
+
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center 30%;
+}
+
+.hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(4,6,15,0.95) 0%, rgba(4,6,15,0.55) 55%, rgba(4,6,15,0.3) 100%),
+    linear-gradient(180deg, rgba(4,6,15,0.4) 0%, rgba(4,6,15,0.2) 40%, rgba(4,6,15,0.9) 100%);
+}
+
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 28px;
+  padding: 60px 24px;
+  width: 100%;
+}
+
+@media (min-width: 900px) {
+  .hero-content { grid-template-columns: 1.3fr 1fr; align-items: center; }
+}
+
+
+.hero-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(32px, 6vw, 52px);
+  font-weight: 700;
+  line-height: 1.15;
+  color: #f8fafc;
+  margin-bottom: 16px;
+}
+
+
+
+.grad-texto {
+  background: linear-gradient(135deg, #7dd3fc, #8b5cf6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+
+.hero-sub {
+  font-size: 15px;
+  color: rgba(248,250,252,0.75);
+  line-height: 1.6;
+  max-width: 480px;
+  margin-bottom: 24px;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #4f8cff, #8b5cf6);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 14px 24px;
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(79,140,255,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-hero:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 40px rgba(79,140,255,0.6);
+}
+
+
+.hero-card-iss {
+  padding: 20px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.hero-card-iss:hover { transform: translateY(-3px); }
+
+.hero-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.dot-verde {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  box-shadow: 0 0 8px #4ade80;
+  animation: pulso 2s infinite;
+}
+
+@keyframes pulso {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+
+
+.hero-card-sub {
+  font-size: 12px;
+  color: rgba(248,250,252,0.5);
+  margin-bottom: 16px;
+  font-family: 'Inter', sans-serif;
+}
+
+.hero-card-numeros {
+  display: flex;
+  gap: 28px;
+}
+
+.hero-numero {
+  font-family: 'Space Mono', monospace;
+  font-size: 26px;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.hero-numero-label {
+  font-size: 11px;
+  color: rgba(248,250,252,0.5);
+  font-family: 'Inter', sans-serif;
+}
+
+/* ════════════════════════════════════
+   EVENTOS DESTACADOS
+   ════════════════════════════════════ */
+.seccion-destacados { padding: 32px 24px 8px; }
+
+.seccion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.seccion-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--texto);
+}
+
+.seccion-ver-todos {
+  font-size: 13px;
+  color: var(--azul);
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.destacados-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.destacado-card {
+  position: relative;
+  padding: 16px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.destacado-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(125,211,252,0.3);
+}
+
+.destacado-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+  z-index: 0;
+  transition: opacity 0.3s;
+}
+
+.destacado-card:hover .destacado-img { opacity: 0.55; }
+
+.destacado-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(4,6,15,0.95) 100%);
+  z-index: 1;
+}
+
+
+
+.destacado-badge {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  width: fit-content;
+  font-family: 'Space Mono', monospace;
+}
+
+.badge-rojo    { background: rgba(248,113,113,0.2); color: #f87171; }
+.badge-azul    { background: rgba(125,211,252,0.2); color: #7dd3fc; }
+.badge-naranja { background: rgba(251,146,60,0.2);  color: #fb923c; }
+.badge-verde   { background: rgba(74,222,128,0.2);  color: #4ade80; }
+
+.destacado-titulo {
+  position: relative; z-index: 2;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--texto);
+  margin-bottom: 4px;
+}
+
+.destacado-fecha {
+  position: relative; z-index: 2;
+  font-size: 12px;
+  color: rgba(232,234,240,0.5);
+  font-family: 'Space Mono', monospace;
+  margin-bottom: 8px;
+}
+
+.destacado-cuenta {
+  position: relative; z-index: 2;
+  font-family: 'Space Mono', monospace;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--azul);
+  margin-bottom: 6px;
+}
+
+.destacado-tag {
+  position: relative; z-index: 2;
+  font-size: 12px;
+  color: #4ade80;
+  font-family: 'Inter', sans-serif;
+}
+
+/* ════════════════════════════════════
+   SEGUNDA FILA
+   ════════════════════════════════════ */
+.seccion-segunda-fila {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  padding: 24px;
+}
+
+@media (min-width: 900px) {
+  .seccion-segunda-fila { grid-template-columns: 1.2fr 1fr 1fr; }
+}
+
+.card-planetas-visibles {
+  padding: 20px;
+}
+
+.planetas-visibles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 12px;
+}
+
+.planeta-mini {
+  text-align: center;
+}
+
+.planeta-mini-icono {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  margin: 0 auto 8px;
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.planeta-mini-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+  font-family: 'Space Grotesk', sans-serif;
+}
+
+.planeta-mini-estado {
+  font-size: 11px;
+  color: #4ade80;
+  font-family: 'Inter', sans-serif;
+}
+
+.card-herramienta {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 220px;
+  transition: transform 0.2s;
+}
+
+.card-herramienta:hover { transform: translateY(-3px); }
+
+.herramienta-img {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.5;
+}
+
+.herramienta-overlay {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 18px;
+  background: linear-gradient(180deg, transparent 0%, rgba(4,6,15,0.9) 100%);
+}
+
+.herramienta-titulo {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--texto);
+  margin-bottom: 4px;
+}
+
+.herramienta-sub {
+  font-size: 12px;
+  color: rgba(232,234,240,0.6);
+  margin-bottom: 12px;
+  font-family: 'Inter', sans-serif;
+}
+
+.btn-mini {
+  background: rgba(125,211,252,0.15);
+  border: 1px solid rgba(125,211,252,0.3);
+  border-radius: 8px;
+  color: var(--azul);
+  font-size: 12px;
+  padding: 8px 14px;
+  cursor: pointer;
+  width: fit-content;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.2s;
+}
+
+.btn-mini:hover { background: rgba(125,211,252,0.25); }
+
+.cita-final {
+  text-align: center;
+  padding: 40px 24px;
+  font-size: 14px;
+  font-style: italic;
+  color: rgba(232,234,240,0.4);
+  font-family: 'Inter', sans-serif;
+  line-height: 1.8;
+}
+
+.cita-final span {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: rgba(232,234,240,0.3);
+}
+
+
+
+
 
