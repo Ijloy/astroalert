@@ -874,6 +874,71 @@ input:focus {
   letter-spacing: 0.5px;
 }
 
+
+.telescopio-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 20px;
+}
+
+@media (min-width: 700px) {
+  .telescopio-layout { grid-template-columns: 1fr 1fr; }
+}
+
+.tel-explica-item {
+  font-size: 12px;
+  color: rgba(232,234,240,0.7);
+  line-height: 1.6;
+  padding: 8px 0;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+  font-family: 'Inter', sans-serif;
+}
+
+.tel-explica-item:last-child { border-bottom: none; }
+
+.tel-explica-item strong {
+  color: var(--azul);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 13px;
+}
+
+.telescopio-imagen-card {
+  position: relative;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-top: 12px;
+  aspect-ratio: 16/10;
+  border: 0.5px solid var(--borde);
+  background: #0a0d1a;
+}
+
+.telescopio-imagen-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.telescopio-imagen-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(4,6,15,0.1) 0%, rgba(4,6,15,0.85) 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 14px;
+}
+
+.telescopio-imagen-texto {
+  font-size: 13px;
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--texto);
+  font-style: italic;
+}
+
 .opos-datos {
   display: flex;
   gap: 16px;

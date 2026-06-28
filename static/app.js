@@ -68,6 +68,7 @@ function irSeccion(seccion) {
     if (seccion === 'conjunciones') cargarConjunciones();
     if (seccion === 'lunas')        cargarLunas();
     if (seccion === 'oposiciones')  cargarOposiciones();
+    if (seccion === 'telescopio') cargarImagenTelescopio();
 }
 }
 
@@ -484,6 +485,45 @@ function generarFondoEspacial() {
 
 generarFondoEspacial();
 
+
+async function cargarImagenesCards() {
+  for (const [cardId, query] of Object.entries(QUERIES_NASA_CARDS)) {
+    try {
+      const res  = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`);
+      const data = await res.json();
+      const items = data.collection?.items || [];
+      if (items.length > 0) {
+        // Elegir una imagen aleatoria entre los primeros 10 resultados
+        const max   = Math.min(items.length, 10);
+        const item  = items[Math.floor(Math.random() * max)];
+        const link  = item.links?.find(l => l.rel === 'preview');
+        if (link) {
+          const card = document.getElementById(cardId);
+          if (card) {
+            const bg = card.querySelector('.grid-card-bg');
+            bg.style.backgroundImage = `url('${link.href}')`;
+          }
+        }
+      }
+    } catch(e) { console.error('Error imagen', cardId, e); }
+  }
+}
+
+
+async function cargarImagenTelescopio() {
+  try {
+    const queries = ['telescope night sky stars observatory', 'astronomer telescope stargazing night'];
+    const query   = queries[Math.floor(Math.random() * queries.length)];
+    const res     = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`);
+    const data    = await res.json();
+    const items   = data.collection?.items || [];
+    if (items.length > 0) {
+      const item = items[Math.floor(Math.random() * Math.min(items.length, 10))];
+      const link = item.links?.find(l => l.rel === 'preview');
+      if (link) document.getElementById('telescopio-bg-img').style.backgroundImage = `url('${link.href}')`;
+    }
+  } catch(e) { console.error(e); }
+}
 
 // ── INIT ──
 window.onload = () => {

@@ -322,67 +322,84 @@
 </div>
 
 <div id="sec-telescopio" class="seccion hidden">
-  <div class="card">
-    <div class="card-label">🔭 CALCULADORA DE TELESCOPIO</div>
-    <div class="telescopio-form">
-      <div class="input-group">
-        <label>Apertura del telescopio (mm)</label>
-        <input type="number" id="tel-apertura" placeholder="Ej: 130" min="1">
+  <div class="card-label" style="padding:0 20px;margin-bottom:12px">🔭 CALCULADORA DE TELESCOPIO</div>
+
+  <div class="telescopio-layout">
+
+    <!-- IZQUIERDA: FORMULARIO -->
+    <div class="telescopio-col-form">
+      <div class="card">
+        <div class="input-group">
+          <label>Apertura del telescopio (mm)</label>
+          <input type="number" id="tel-apertura" placeholder="Ej: 130" min="1">
+        </div>
+        <div class="input-group">
+          <label>Focal del telescopio (mm)</label>
+          <input type="number" id="tel-focal" placeholder="Ej: 1000" min="1">
+        </div>
+        <div class="input-group">
+          <label>Focal del ocular (mm)</label>
+          <input type="number" id="tel-ocular" placeholder="Ej: 10" min="1">
+        </div>
+        <div class="input-group">
+          <label>Campo aparente del ocular (°)</label>
+          <input type="number" id="tel-afov" placeholder="52 por defecto" min="1" max="120">
+        </div>
+        <button class="btn-primary ripple" onclick="calcularTelescopio()">Calcular</button>
       </div>
-      <div class="input-group">
-        <label>Focal del telescopio (mm)</label>
-        <input type="number" id="tel-focal" placeholder="Ej: 1000" min="1">
+
+      <div id="telescopio-resultado" class="hidden" style="margin-top:12px">
+        <div class="tel-grid">
+          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-mag">—</div><div class="tel-dato-label">Magnificación</div></div>
+          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-campo">—</div><div class="tel-dato-label">Campo visual</div></div>
+          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-pupila">—</div><div class="tel-dato-label">Pupila salida</div></div>
+          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-limite">—</div><div class="tel-dato-label">Límite magnitud</div></div>
+          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-min">—</div><div class="tel-dato-label">Mag. mínima</div></div>
+          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-max">—</div><div class="tel-dato-label">Mag. máxima</div></div>
+        </div>
+        <div class="luna-seccion" style="margin-top:10px">
+          <div class="luna-seccion-titulo">🎯 Objetos recomendados</div>
+          <div id="tel-objetos" class="luna-seccion-texto"></div>
+        </div>
+        <div id="tel-advertencias-box" class="luna-seccion hidden" style="margin-top:8px;border-color:rgba(251,113,133,0.3)">
+          <div class="luna-seccion-titulo" style="color:#fb7185">⚠ Advertencias</div>
+          <div id="tel-advertencias" class="luna-seccion-texto" style="color:#fb7185"></div>
+        </div>
       </div>
-      <div class="input-group">
-        <label>Focal del ocular (mm)</label>
-        <input type="number" id="tel-ocular" placeholder="Ej: 10" min="1">
-      </div>
-      <div class="input-group">
-        <label>Campo visual aparente del ocular (°) — opcional</label>
-        <input type="number" id="tel-afov" placeholder="52 por defecto" min="1" max="120">
-      </div>
-      <button class="btn-primary ripple" onclick="calcularTelescopio()">Calcular</button>
     </div>
-    <div id="telescopio-resultado" class="hidden" style="margin-top:16px">
-      <div class="tel-grid">
-        <div class="tel-dato-card">
-          <div class="tel-dato-valor" id="tel-mag">—</div>
-          <div class="tel-dato-label">Magnificación</div>
+
+    <!-- DERECHA: EXPLICACIÓN + IMAGEN -->
+    <div class="telescopio-col-info">
+      <div class="card">
+        <div class="luna-seccion-titulo" style="margin-bottom:10px">📖 ¿Qué significan estos números?</div>
+        <div class="tel-explica-item">
+          <strong>Magnificación</strong> — cuántas veces se amplía la imagen. Más alto no siempre es mejor: depende de tu telescopio.
         </div>
-        <div class="tel-dato-card">
-          <div class="tel-dato-valor" id="tel-campo">—</div>
-          <div class="tel-dato-label">Campo visual</div>
+        <div class="tel-explica-item">
+          <strong>Campo visual</strong> — cuánto cielo ves por el ocular. Campos grandes son ideales para nebulosas y cúmulos.
         </div>
-        <div class="tel-dato-card">
-          <div class="tel-dato-valor" id="tel-pupila">—</div>
-          <div class="tel-dato-label">Pupila de salida</div>
+        <div class="tel-explica-item">
+          <strong>Pupila de salida</strong> — el diámetro de luz que llega a tu ojo. Entre 2-5mm es lo más cómodo.
         </div>
-        <div class="tel-dato-card">
-          <div class="tel-dato-valor" id="tel-limite">—</div>
-          <div class="tel-dato-label">Límite magnitud</div>
+        <div class="tel-explica-item">
+          <strong>Límite de magnitud</strong> — la estrella más débil que tu telescopio puede captar. Útil para saber si verás un cometa débil.
         </div>
-        <div class="tel-dato-card">
-          <div class="tel-dato-valor" id="tel-min">—</div>
-          <div class="tel-dato-label">Mag. mínima útil</div>
-        </div>
-        <div class="tel-dato-card">
-          <div class="tel-dato-valor" id="tel-max">—</div>
-          <div class="tel-dato-label">Mag. máxima útil</div>
+        <div class="tel-explica-item">
+          <strong>Mag. mínima/máxima útil</strong> — el rango ideal de aumento para tu apertura. Pasarte de este rango da imágenes borrosas u oscuras.
         </div>
       </div>
 
-      <div class="luna-seccion" style="margin-top:12px">
-        <div class="luna-seccion-titulo">🎯 Objetos recomendados</div>
-        <div id="tel-objetos" class="luna-seccion-texto"></div>
-      </div>
-
-      <div id="tel-advertencias-box" class="luna-seccion hidden" style="margin-top:8px;border-color:rgba(251,113,133,0.3)">
-        <div class="luna-seccion-titulo" style="color:#fb7185">⚠ Advertencias</div>
-        <div id="tel-advertencias" class="luna-seccion-texto" style="color:#fb7185"></div>
+      <div class="telescopio-imagen-card">
+        <div class="telescopio-imagen-bg" id="telescopio-bg-img"></div>
+        <div class="telescopio-imagen-overlay">
+          <div class="telescopio-imagen-texto">Observando el universo, un grado a la vez</div>
+        </div>
       </div>
     </div>
-    <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>
+
   </div>
+
+  <button class="btn-volver ripple" onclick="volverMenu()" style="margin:16px 20px">← Volver</button>
 </div>
 
   <script src="/static/app.js"></script>
