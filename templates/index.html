@@ -119,29 +119,17 @@
 <div id="main-panel" class="hidden">
 
   <!-- TOPBAR -->
- <header class="topbar-revista">
-  <div class="topbar-fila-superior">
-    <button class="topbar-menu-btn" onclick="toggleSidebar()">
-      <svg viewBox="0 0 40 40" width="26" height="26" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="20,3 36,12 36,28 20,37 4,28 4,12"
-          fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linejoin="round"/>
-      </svg>
-    </button>
-    <span class="topbar-titulo-grande">ASTROALERT</span>
-    <div class="topbar-acciones">
-      <span class="topbar-location-small">Quito, EC</span>
-    </div>
-  </div>
-  <nav class="topbar-nav-revista">
-    <button class="nav-revista-item active" onclick="irSeccion('iss')">ISS</button>
-    <button class="nav-revista-item" onclick="irSeccion('planetas')">Planetas</button>
-    <button class="nav-revista-item" onclick="irSeccion('eclipses')">Eclipses</button>
-    <button class="nav-revista-item" onclick="irSeccion('conjunciones')">Conjunciones</button>
-    <button class="nav-revista-item" onclick="irSeccion('lunas')">Lunas</button>
-    <button class="nav-revista-item" onclick="irSeccion('oposiciones')">Oposiciones</button>
-    <button class="nav-revista-item" onclick="irSeccion('telescopio')">Telescopio</button>
-  </nav>
+  <header class="topbar-simple">
+  <button class="topbar-menu-btn" onclick="toggleSidebar()">
+    <svg viewBox="0 0 40 40" width="26" height="26" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="20,3 36,12 36,28 20,37 4,28 4,12"
+        fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  <span class="topbar-titulo-grande">ASTROALERT</span>
+  <div class="topbar-location-small">Quito, EC</div>
 </header>
+
 
   <!-- SIDEBAR -->
   <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
