@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, redirect
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from database.models import db, bcrypt
@@ -11,6 +11,7 @@ from events.lunas import obtener_lunas, obtener_luna, obtener_imagen_nasa
 from events.cometas import obtener_cometas
 from events.oposiciones import proximas_oposiciones
 from events.telescopio import calcular_telescopio
+from events.apod import imagen_del_dia
 from notifications.scheduler import iniciar_scheduler
 from config import LAT, LON, CITY, SECRET_KEY, JWT_SECRET_KEY, DATABASE_URL
 
@@ -30,15 +31,28 @@ app.register_blueprint(auth_bp)
 with app.app_context():
     db.create_all()
 
-@app.route('/web')
-def web():
-    return render_template('index.html')
-
 @app.route('/')
 def inicio():
+    return render_template('index.html')
+
+@app.route('/web')
+def web():
+    # Ruta antigua: se mantiene para no romper enlaces ya compartidos.
+    return redirect('/', code=301)
+
+@app.route('/api')
+def api_indice():
     return jsonify({'app': 'AstroAlert', 'ciudad': CITY,
-                    'endpoints': ['/api/iss', '/api/planetas', '/api/eventos',
-                                  '/api/registro', '/api/login', '/api/perfil']})
+                    'endpoints': ['/api/iss', '/api/planetas', '/api/eclipses', '/api/conjunciones',
+                                  '/api/oposiciones', '/api/cometas', '/api/lunas', '/api/imagen-dia',
+                                  '/api/telescopio', '/api/registro', '/api/login', '/api/perfil']})
+
+@app.route('/api/imagen-dia')
+def api_imagen_dia():
+    img = imagen_del_dia()
+    if not img:
+        return jsonify({'error': 'Imagen no disponible'}), 503
+    return jsonify(img)
 
 @app.route('/api/iss')
 def api_iss():
