@@ -1,17 +1,18 @@
-from skyfield.api import Topos, load
+"""Oposiciones: cuando un planeta exterior queda opuesto al Sol.
+
+Ese día sale al anochecer, se ve toda la noche y está en su brillo máximo.
+Antes la elongación se calculaba solo con la ascensión recta (ignorando la
+declinación) y en pasos de 2 días. Ahora se usa la función de Skyfield
+almanac.oppositions_conjunctions, que da el instante exacto.
+"""
 from datetime import datetime, timezone, timedelta
-from config import LAT, LON, ALT, CITY
-import os
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_loader  = load.__class__(BASE_DIR)
-TS       = _loader.timescale()
-EPH      = _loader('de421.bsp')
+from skyfield import almanac
+from skyfield.magnitudelib import planetary_magnitude
 
-TIERRA = EPH['earth']
-SOL    = EPH['sun']
+from events.efemerides import TS, EPH, TIERRA, SOL, CITY, a_local, cuenta_regresiva, cache_ttl
 
-PLANETAS_OPOSICION = {
+PLANETAS_EXTERIORES = {
     'Marte':   EPH['mars'],
     'Júpiter': EPH['jupiter barycenter'],
     'Saturno': EPH['saturn barycenter'],
@@ -19,71 +20,63 @@ PLANETAS_OPOSICION = {
     'Neptuno': EPH['neptune barycenter'],
 }
 
-def _elongacion(planeta, t):
-    """Calcula la elongación solar de un planeta en grados."""
-    obs      = TIERRA.at(t)
-    ast_p    = obs.observe(planeta).apparent()
-    ast_sol  = obs.observe(SOL).apparent()
-    ra_p,  dec_p,  _ = ast_p.radec()
-    ra_s,  dec_s,  _ = ast_sol.radec()
-    from math import acos, sin, cos, radians, degrees
-    diff = abs(ra_p.hours - ra_s.hours) * 15
-    if diff > 180: diff = 360 - diff
-    return diff
+DIAS_ADELANTE = 800   # Marte tiene oposición cada ~26 meses
+A_SIMPLE_VISTA = 6.0  # magnitud límite aproximada en un cielo oscuro
 
-def _distancia_ua(planeta, t):
-    ast  = TIERRA.at(t).observe(planeta)
-    _, _, dist = ast.apparent().altaz()
-    _, _, dist = TIERRA.at(t).observe(planeta).radec()
-    return None
 
-def proximas_oposiciones(dias=365):
-    ahora    = datetime.now(timezone.utc)
-    ahora_ts = ahora.timestamp()
-    resultado = []
-
-    for nombre, planeta in PLANETAS_OPOSICION.items():
-        max_elong    = 0
-        fecha_oposi  = None
-        elong_actual = 0
-
-        for d in range(0, dias, 2):
-            dt  = ahora + timedelta(days=d)
-            t   = TS.from_datetime(dt)
-            elong = _elongacion(planeta, t)
-
-            if elong > max_elong:
-                max_elong   = elong
-                fecha_oposi = dt
-                elong_actual = elong
-
-        if max_elong > 160:
-            dt_local = fecha_oposi - timedelta(hours=5)
-            diff     = fecha_oposi.timestamp() - ahora_ts
-            dias_r   = int(diff // 86400)
-
-            # Calcular distancia aproximada en UA
-            t_oposi = TS.from_datetime(fecha_oposi)
-            ast     = TIERRA.at(t_oposi).observe(planeta)
-            ra, dec, dist = ast.apparent().radec()
-
-            resultado.append({
+@cache_ttl(12 * 3600)
+def _calcular():
+    ahora = datetime.now(timezone.utc)
+    t0 = TS.from_datetime(ahora - timedelta(days=1))
+    t1 = TS.from_datetime(ahora + timedelta(days=DIAS_ADELANTE))
+    eventos = []
+    for nombre, planeta in PLANETAS_EXTERIORES.items():
+        tiempos, tipos = almanac.find_discrete(t0, t1, almanac.oppositions_conjunctions(EPH, planeta))
+        for t, tipo in zip(tiempos, tipos):
+            if tipo != 1:      # 1 = oposición, 0 = conjunción con el Sol
+                continue
+            obs  = TIERRA.at(t)
+            ast  = obs.observe(planeta).apparent()
+            elong = ast.separation_from(obs.observe(SOL).apparent()).degrees
+            mag  = round(float(planetary_magnitude(obs.observe(planeta))), 1)
+            eventos.append({
                 'planeta':      nombre,
-                'fecha_local':  dt_local.strftime('%d/%m/%Y'),
-                'timestamp':    fecha_oposi.timestamp(),
-                'elongacion':   round(max_elong, 1),
-                'distancia_ua': round(dist.au, 3),
-                'cuenta_regresiva': {
-                    'dias':  dias_r,
-                    'texto': f"En {dias_r} días"
-                },
-                'descripcion': f"{nombre} estará en su punto más cercano a la Tierra — mejor noche del año para observarlo."
+                'fecha_utc':    t.utc_datetime(),
+                'elongacion':   round(float(elong), 1),
+                'distancia_ua': round(float(ast.distance().au), 3),
+                'magnitud':     mag,
+                'simple_vista': mag <= A_SIMPLE_VISTA,
             })
+            break              # solo la próxima de cada planeta
+    eventos.sort(key=lambda e: e['fecha_utc'])
+    return eventos
 
-    resultado.sort(key=lambda x: x['timestamp'])
+
+def proximas_oposiciones():
+    ahora = datetime.now(timezone.utc)
+    resultado = []
+    for e in _calcular():
+        if e['fecha_utc'] < ahora - timedelta(days=1):
+            continue
+        como = 'visible a simple vista' if e['simple_vista'] else 'necesitas binoculares o telescopio'
+        cr = cuenta_regresiva(e['fecha_utc'])
+        cr['texto'] = f"En {cr['dias']} días" if cr['dias'] > 0 else 'Hoy'
+        resultado.append({
+            'planeta':      e['planeta'],
+            'fecha_local':  a_local(e['fecha_utc']).strftime('%d/%m/%Y'),
+            'timestamp':    e['fecha_utc'].timestamp(),
+            'elongacion':   e['elongacion'],
+            'distancia_ua': e['distancia_ua'],
+            'magnitud':     e['magnitud'],
+            'simple_vista': e['simple_vista'],
+            'cuenta_regresiva': cr,
+            'descripcion':  (f"{e['planeta']} queda opuesto al Sol: sale al anochecer, se ve toda la noche "
+                             f"y alcanza su brillo máximo (magnitud {e['magnitud']}, {como})."),
+        })
     return resultado
 
+
 if __name__ == '__main__':
-    print('\nPróximas oposiciones planetarias:\n')
+    print(f'\nPróximas oposiciones ({CITY}):\n')
     for o in proximas_oposiciones():
-        print(f"  {o['planeta']:<10}  {o['fecha_local']}  —  {o['cuenta_regresiva']['texto']}  —  {o['distancia_ua']} UA")
+        print(f"  {o['planeta']:<8} {o['fecha_local']}  {o['distancia_ua']} UA  mag {o['magnitud']}  {o['cuenta_regresiva']['texto']}")

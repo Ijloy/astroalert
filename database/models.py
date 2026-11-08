@@ -14,7 +14,7 @@ class Usuario(db.Model):
     telefono_numero  = db.Column(db.String(20), nullable=True)
     fecha_nacimiento = db.Column(db.String(20), nullable=True)
     ciudad           = db.Column(db.String(100), default='Quito')
-    lat              = db.Column(db.Float, default=0.18)
+    lat              = db.Column(db.Float, default=-0.18)
     lon              = db.Column(db.Float, default=-78.47)
     creado_en        = db.Column(db.DateTime, default=datetime.utcnow)
 

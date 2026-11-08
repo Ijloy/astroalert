@@ -1490,3 +1490,12 @@ input:focus {
   .topbar-location-small { display: none; }
   .topbar-titulo-grande { font-size: 15px; letter-spacing: 2px; }
 }
+
+/* FASE 1 — eventos no observables desde la ciudad se muestran atenuados */
+.item-atenuado { opacity: 0.6; }
+.enlace-fuente {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--acento-2);
+}

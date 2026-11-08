@@ -4,10 +4,10 @@ from flask_jwt_extended import JWTManager
 from database.models import db, bcrypt
 from routes.auth import auth_bp
 from events.iss import posicion_actual, distancia_km
-from events.sky import planetas_visibles, proxima_ventana
+from events.sky import planetas_visibles, proxima_ventana, estado_cielo
 from events.eclipses import proximos_eclipses
 from events.conjunciones import proximas_conjunciones
-from events.lunas import obtener_lunas, obtener_luna, obtener_imagen_nasa
+from events.lunas import obtener_lunas, obtener_luna
 from events.cometas import obtener_cometas
 from events.oposiciones import proximas_oposiciones
 from events.telescopio import calcular_telescopio
@@ -62,11 +62,12 @@ def api_iss():
 
 @app.route('/api/planetas')
 def api_planetas():
+    cielo = estado_cielo()
     ahora = planetas_visibles()
     if ahora:
-        return jsonify({'visibles_ahora': True, 'planetas': ahora, 'ciudad': CITY})
+        return jsonify({'visibles_ahora': True, 'planetas': ahora, 'cielo': cielo, 'ciudad': CITY})
     ventana = proxima_ventana()
-    return jsonify({'visibles_ahora': False, 'proxima_ventana': ventana, 'ciudad': CITY})
+    return jsonify({'visibles_ahora': False, 'proxima_ventana': ventana, 'cielo': cielo, 'ciudad': CITY})
 
 @app.route('/api/eclipses')
 def api_eclipses():
@@ -96,13 +97,6 @@ def api_luna(luna_id):
     if not luna:
         return jsonify({'error': 'Luna no encontrada'}), 404
     return jsonify(luna)
-
-@app.route('/api/lunas/<luna_id>/imagen')
-def api_luna_imagen(luna_id):
-    img = obtener_imagen_nasa(luna_id)
-    if not img:
-        return jsonify({'error': 'Imagen no encontrada'}), 404
-    return jsonify({'imagen': img})
 
 @app.route('/api/oposiciones')
 def api_oposiciones():

@@ -1,120 +1,96 @@
-import requests
-from datetime import datetime, timezone, timedelta
-from config import LAT, LON, CITY
+"""Cometas destacados recientes.
 
-# Cometas conocidos actualmente activos — fuente: JPL/MPC
+La lista anterior tenía fechas de perihelio incorrectas (C/2024 G3 en 2026 en
+vez del 13/01/2025; C/2025 N1 como cometa "en aproximación" en 2026, cuando es
+3I/ATLAS, el tercer objeto interestelar, con perihelio el 29/10/2025) y
+marcaba cometas como "activos" sin base.
+
+Esta lista es curada a mano: solo datos verificados, con su fuente. El estado
+(próximo / reciente / pasado) se calcula a partir de las fechas.
+Integración futura: consultar JPL SBDB para obtener cometas en tiempo real.
+"""
+from datetime import datetime, timezone
+
+ACTUALIZADO = "2026-11-08"
+
 COMETAS_CONOCIDOS = [
     {
         "id": "C2024_G3",
         "nombre": "C/2024 G3 (ATLAS)",
-        "descripcion": "Cometa descubierto en abril 2024 por el programa ATLAS. Alcanzó su perihelio en enero 2026.",
-        "magnitud_pico": 2.0,
-        "fecha_perihelio": "2026-01-13",
-        "activo": True,
+        "descripcion": ("El \"Gran Cometa de 2025\". Pasó a solo 0,09 UA del Sol y llegó a magnitud −3,8; "
+                        "se vio mejor desde el hemisferio sur. Su núcleo se desintegró después del perihelio."),
+        "magnitud_pico": -3.8,
+        "fecha_perihelio": "2025-01-13",
+        "fuente": "https://en.wikipedia.org/wiki/C/2024_G3_(ATLAS)",
+    },
+    {
+        "id": "3I_ATLAS",
+        "nombre": "3I/ATLAS (C/2025 N1)",
+        "descripcion": ("El tercer objeto interestelar conocido, después de ʻOumuamua y Borisov. "
+                        "Descubierto el 1 de julio de 2025 desde Chile; viene de fuera del sistema solar "
+                        "y no volverá. Solo se pudo observar con telescopios."),
+        "magnitud_pico": None,
+        "fecha_perihelio": "2025-10-29",
+        "fuente": "https://www.timeanddate.com/news/astronomy/comet-3i-atlas",
     },
     {
         "id": "C2023_A3",
         "nombre": "C/2023 A3 (Tsuchinshan-ATLAS)",
-        "descripcion": "Uno de los cometas más brillantes de la década. Visible a simple vista en octubre 2024.",
-        "magnitud_pico": 0.2,
+        "descripcion": ("El \"Gran Cometa de 2024\". Cerca del perihelio se observó con binoculares "
+                        "alrededor de magnitud −3, y en octubre de 2024 se vio a simple vista al atardecer "
+                        "con una cola larga."),
+        "magnitud_pico": -3.0,
         "fecha_perihelio": "2024-09-27",
-        "activo": False,
+        "fuente": "https://en.wikipedia.org/wiki/C/2023_A3_(Tsuchinshan%E2%80%93ATLAS)",
     },
     {
         "id": "12P",
         "nombre": "12P/Pons-Brooks",
-        "descripcion": "Cometa periódico de 71 años. Apodado el cometa del diablo por su forma de cuernos.",
+        "descripcion": ("Cometa periódico que vuelve cada ~71 años. Apodado \"cometa del diablo\" por la "
+                        "forma de cuernos que tomó tras sus estallidos."),
         "magnitud_pico": 4.5,
         "fecha_perihelio": "2024-04-21",
-        "activo": False,
-    },
-    {
-        "id": "C2025_N1",
-        "nombre": "C/2025 N1 (ATLAS)",
-        "descripcion": "Cometa descubierto en 2025, actualmente en aproximación al sol.",
-        "magnitud_pico": 6.0,
-        "fecha_perihelio": "2026-11-15",
-        "activo": True,
-    },
-    {
-        "id": "29P",
-        "nombre": "29P/Schwassmann-Wachmann",
-        "descripcion": "Cometa conocido por sus erupciones periódicas de gas y polvo.",
-        "magnitud_pico": 9.0,
-        "fecha_perihelio": "2026-03-01",
-        "activo": True,
+        "fuente": "https://en.wikipedia.org/wiki/12P/Pons%E2%80%93Brooks",
     },
 ]
 
-def _horizons_cometa(nombre_horizons):
-    """Consulta posición actual de un cometa via JPL Horizons."""
-    try:
-        ahora = datetime.now(timezone.utc)
-        fin   = ahora + timedelta(minutes=1)
-        params = {
-            'format':     'json',
-            'COMMAND':    f"'{nombre_horizons}'",
-            'OBJ_DATA':   'NO',
-            'MAKE_EPHEM': 'YES',
-            'EPHEM_TYPE': 'OBSERVER',
-            'CENTER':     '500@399',
-            'START_TIME': f"'{ahora.strftime('%Y-%b-%d %H:%M')}'",
-            'STOP_TIME':  f"'{fin.strftime('%Y-%b-%d %H:%M')}'",
-            'STEP_SIZE':  '1m',
-            'QUANTITIES': '9',  # brillo visual
-        }
-        r    = requests.get('https://ssd.jpl.nasa.gov/api/horizons.api', params=params, timeout=15)
-        data = r.json().get('result', '')
-        soe  = data.find('$$SOE')
-        eoe  = data.find('$$EOE')
-        if soe == -1:
-            return None
-        linea  = data[soe:eoe].split('\n')[1].strip()
-        partes = linea.split()
-        if len(partes) >= 5:
-            return {'magnitud': partes[4]}
-    except:
-        pass
-    return None
+DIAS_RECIENTE = 180
+
+
+def _estado(fecha_peri, ahora):
+    dias = (fecha_peri - ahora).days
+    if dias > 0:
+        return 'próximo', f"Perihelio en {dias} días"
+    hace = -dias
+    return ('reciente' if hace < DIAS_RECIENTE else 'pasado'), f"Perihelio hace {hace} días"
+
 
 def obtener_cometas():
-    ahora    = datetime.now(timezone.utc)
+    ahora = datetime.now(timezone.utc)
     resultado = []
-
     for c in COMETAS_CONOCIDOS:
         fecha_peri = datetime.strptime(c['fecha_perihelio'], '%Y-%m-%d').replace(tzinfo=timezone.utc)
-        dias_desde = (ahora - fecha_peri).days
-        dias_hasta = (fecha_peri - ahora).days
-
-        if dias_hasta > 0:
-            estado    = 'próximo'
-            tiempo_txt = f"Perihelio en {dias_hasta} días"
-        elif dias_desde < 180:
-            estado    = 'activo'
-            tiempo_txt = f"Perihelio hace {dias_desde} días"
-        else:
-            estado    = 'pasado'
-            tiempo_txt = f"Perihelio hace {dias_desde} días"
-
+        estado, tiempo = _estado(fecha_peri, ahora)
+        mag = c['magnitud_pico']
         resultado.append({
             'id':              c['id'],
             'nombre':          c['nombre'],
             'descripcion':     c['descripcion'],
-            'magnitud_pico':   c['magnitud_pico'],
+            'magnitud_pico':   mag,
             'fecha_perihelio': fecha_peri.strftime('%d/%m/%Y'),
+            'timestamp':       fecha_peri.timestamp(),
             'estado':          estado,
-            'tiempo':          tiempo_txt,
-            'visible_binoculares': c['magnitud_pico'] < 8.0,
-            'visible_simple_vista': c['magnitud_pico'] < 5.0,
+            'tiempo':          tiempo,
+            'visible_simple_vista': mag is not None and mag < 5.0,
+            'visible_binoculares':  mag is not None and mag < 8.0,
+            'fuente':          c['fuente'],
+            'actualizado':     ACTUALIZADO,
         })
-
-    resultado.sort(key=lambda x: (x['estado'] != 'activo', x['magnitud_pico']))
+    # Primero los próximos, luego los más recientes
+    resultado.sort(key=lambda x: (x['estado'] != 'próximo', -x['timestamp']))
     return resultado
 
+
 if __name__ == '__main__':
-    print('\nCometas:\n')
     for c in obtener_cometas():
-        vis = '👁 simple vista' if c['visible_simple_vista'] else ('🔭 binoculares' if c['visible_binoculares'] else '📡 telescopio')
-        print(f"  {c['nombre']:<35}  {c['estado']:<8}  mag {c['magnitud_pico']}  {vis}")
-        print(f"    {c['tiempo']}")
-        
+        print(f"  {c['nombre']:<32} {c['estado']:<9} {c['tiempo']}")

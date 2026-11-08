@@ -169,6 +169,11 @@ function actualizarEstadoSesion() {
 // ── UTILIDADES ──
 const fmt = n => Number(n).toLocaleString('es-EC');
 
+function horasTexto(minutos) {
+  const h = Math.floor(minutos / 60), m = minutos % 60;
+  return h ? `${h} h${m ? ' ' + m + ' min' : ''}` : `${m} min`;
+}
+
 function errorHTML(id) {
   document.getElementById(id).innerHTML =
     '<div class="card-sub">No pudimos obtener esta información ahora mismo. Inténtalo de nuevo en unos minutos.</div>';
@@ -228,13 +233,14 @@ function llenarDestacado(prefijo, { titulo, fecha, cuenta, tag }) {
 async function cargarDestacadoEclipse() {
   try {
     const { eclipses } = await getJSON('/api/eclipses');
-    const e = eclipses[0];
+    const e = eclipses.find(x => x.visible_local) || eclipses[0];
     if (!e) return llenarDestacado('eclipse', { titulo: 'Sin eclipses próximos' });
+    const tipoLocal = e.tipo === 'Solar' && e.local ? e.local.tipo.toLowerCase() : e.subtipo.toLowerCase();
     llenarDestacado('eclipse', {
-      titulo: `Eclipse ${e.tipo.toLowerCase()} ${e.subtipo.toLowerCase()}`,
+      titulo: `Eclipse ${e.tipo.toLowerCase()} ${tipoLocal}`,
       fecha:  e.fecha_local,
       cuenta: e.cuenta_regresiva.texto,
-      tag:    e.visible_quito ? '✓ Visible desde Quito' : 'No visible desde Quito',
+      tag:    e.visible_local ? '✓ Visible desde Quito' : 'No visible desde Quito',
     });
   } catch { llenarDestacado('eclipse', { titulo: 'No disponible' }); }
 }
@@ -242,8 +248,8 @@ async function cargarDestacadoEclipse() {
 async function cargarDestacadoConjuncion() {
   try {
     const { conjunciones } = await getJSON('/api/conjunciones');
-    const c = [...conjunciones].sort((a, b) => a.timestamp - b.timestamp)[0];
-    if (!c) return llenarDestacado('conjuncion', { titulo: 'Ninguna en los próximos 90 días' });
+    const c = conjunciones.find(x => x.observable) || conjunciones[0];
+    if (!c) return llenarDestacado('conjuncion', { titulo: 'Ninguna en los próximos meses' });
     llenarDestacado('conjuncion', {
       titulo: `${c.planeta1} y ${c.planeta2}`,
       fecha:  c.fecha_local,
@@ -262,7 +268,7 @@ async function cargarDestacadoOposicion() {
       titulo: `Oposición de ${o.planeta}`,
       fecha:  o.fecha_local,
       cuenta: o.cuenta_regresiva.texto,
-      tag:    `A ${o.distancia_ua} UA de la Tierra`,
+      tag:    `Magnitud ${o.magnitud} · ${o.simple_vista ? 'a simple vista' : 'con telescopio'}`,
     });
   } catch { llenarDestacado('oposicion', { titulo: 'No disponible' }); }
 }
@@ -276,7 +282,7 @@ async function cargarDestacadoCometa() {
       titulo: c.nombre,
       fecha:  `Perihelio: ${c.fecha_perihelio}`,
       cuenta: c.tiempo,
-      tag:    c.visible_simple_vista ? 'Llegó a verse a simple vista' : (c.visible_binoculares ? 'Con binoculares' : 'Con telescopio'),
+      tag:    c.visible_simple_vista ? 'Llegó a verse a simple vista' : (c.visible_binoculares ? 'Con binoculares' : 'Solo con telescopio'),
     });
   } catch { llenarDestacado('cometa', { titulo: 'No disponible' }); }
 }
@@ -309,7 +315,8 @@ async function cargarPlanetasInicio() {
       grid.innerHTML  = data.planetas.map(p => planetaMini(p, `${p.altitud}° · ${p.direccion}`)).join('');
     } else if (data.proxima_ventana) {
       const v = data.proxima_ventana;
-      sub.textContent = `Ninguno ahora. Próxima ventana a las ${v.hora_local} (en ${v.en_horas} h)`;
+      const motivo = data.cielo?.condicion === 'noche' ? 'Ninguno sobre el horizonte' : `Ahora es de ${data.cielo?.condicion || 'día'}`;
+      sub.textContent = `${motivo}. Se verán desde las ${v.hora_local} (en ${horasTexto(v.en_minutos)})`;
       grid.innerHTML  = v.planetas.map(p => planetaMini(p, `${p.altitud}° · ${p.direccion}`)).join('');
     } else {
       sub.textContent = 'Ningún planeta visible en las próximas horas.';
@@ -357,12 +364,20 @@ async function cargarPlanetas() {
     let html;
     if (data.visibles_ahora && data.planetas?.length) {
       html = data.planetas.map(p =>
-        `<div class="conj-item"><div class="card-value">${p.planeta} — ${p.altitud}° de altura hacia el ${p.direccion}</div></div>`
+        `<div class="conj-item">
+           <div class="card-value">${p.planeta} — ${p.altitud}° de altura hacia el ${p.direccion}</div>
+           <div class="card-sub">Magnitud ${p.magnitud ?? '—'} (cuanto más bajo el número, más brillante)</div>
+         </div>`
       ).join('');
     } else if (data.proxima_ventana) {
       const v = data.proxima_ventana;
-      html = `<div class="card-value">Próxima ventana: <strong>${v.hora_local}</strong></div>
-              <div class="card-sub">En ${v.en_horas} h · ${v.planetas.map(p => p.planeta).join(', ')}</div>`;
+      const cielo = data.cielo || {};
+      const motivo = cielo.condicion === 'noche'
+        ? 'Ahora no hay planetas sobre el horizonte.'
+        : `Ahora es de ${cielo.condicion} en Quito (Sol a ${cielo.altura_sol}°): los planetas no se pueden ver.`;
+      html = `<div class="card-sub">${motivo}</div>
+              <div class="card-value" style="margin-top:8px">Próxima ventana: <strong>${v.hora_local}</strong> (en ${horasTexto(v.en_minutos)})</div>
+              ${v.planetas.map(p => `<div class="card-sub">${p.planeta} — ${p.altitud}° hacia el ${p.direccion} · magnitud ${p.magnitud ?? '—'}</div>`).join('')}`;
     } else {
       html = '<div class="card-sub">No hay planetas visibles en las próximas horas. El cielo sigue su curso.</div>';
     }
@@ -379,13 +394,18 @@ async function cargarEclipses() {
     }
     document.getElementById('eclipses-data').innerHTML = eclipses.map(e => {
       const cr  = e.cuenta_regresiva;
-      const vis = e.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
+      const vis = e.visible_local ? '✓ visible desde Quito' : 'no visible desde Quito';
       const ico = e.tipo === 'Solar' ? '☀️' : '🌑';
+      const horario = e.tipo === 'Solar' && e.local
+        ? `<div class="card-sub">Desde Quito: empieza ${e.local.inicio} · máximo ${e.local.maximo} · termina ${e.local.fin} (hora local)</div>`
+        : '';
       return `
-        <div class="conj-item">
+        <div class="conj-item ${e.visible_local ? '' : 'item-atenuado'}">
           <div class="card-value">${ico} Eclipse ${e.tipo.toLowerCase()} ${e.subtipo.toLowerCase()}</div>
           <div class="cuenta-grande">${cr.dias}d ${cr.horas}h ${cr.mins}m</div>
           <div class="card-sub">${e.fecha_local} · ${vis}</div>
+          ${horario}
+          <div class="card-sub texto-italico">${e.descripcion}</div>
         </div>`;
     }).join('');
   } catch { errorHTML('eclipses-data'); }
@@ -394,13 +414,13 @@ async function cargarEclipses() {
 async function cargarConjunciones() {
   try {
     const { conjunciones } = await getJSON('/api/conjunciones');
-    const lista = [...conjunciones].sort((a, b) => a.timestamp - b.timestamp);
-    document.getElementById('conjunciones-data').innerHTML = !lista.length
-      ? '<div class="card-sub">Ninguna conjunción notable en los próximos 90 días.</div>'
-      : lista.map(c => `
-          <div class="conj-item">
+    document.getElementById('conjunciones-data').innerHTML = !conjunciones.length
+      ? '<div class="card-sub">Ninguna conjunción notable (menos de 3°) en los próximos 4 meses. El cielo sigue su curso.</div>'
+      : conjunciones.map(c => `
+          <div class="conj-item ${c.observable ? '' : 'item-atenuado'}">
             <div class="card-value">✨ ${c.planeta1} y ${c.planeta2}</div>
             <div class="card-sub">Separación: ${c.separacion}° · ${c.fecha_local} · ${c.cuenta_regresiva.texto}</div>
+            <div class="card-sub texto-italico">${c.nota}</div>
           </div>`).join('');
   } catch { errorHTML('conjunciones-data'); }
 }
@@ -409,7 +429,7 @@ async function cargarOposiciones() {
   try {
     const { oposiciones } = await getJSON('/api/oposiciones');
     document.getElementById('oposiciones-data').innerHTML = !oposiciones.length
-      ? '<div class="card-sub">No hay oposiciones en los próximos 12 meses.</div>'
+      ? '<div class="card-sub">No hay oposiciones próximas.</div>'
       : oposiciones.map(o => `
           <div class="conj-item">
             <div class="opos-row">
@@ -421,7 +441,7 @@ async function cargarOposiciones() {
             </div>
             <div class="opos-datos">
               <span>Distancia: <strong>${o.distancia_ua} UA</strong></span>
-              <span>Elongación: <strong>${o.elongacion}°</strong></span>
+              <span>Magnitud: <strong>${o.magnitud}</strong></span>
             </div>
             <div class="card-sub texto-italico">${o.descripcion}</div>
           </div>`).join('');
@@ -431,18 +451,23 @@ async function cargarOposiciones() {
 async function cargarCometas() {
   try {
     const { cometas } = await getJSON('/api/cometas');
-    document.getElementById('cometas-data').innerHTML = !cometas.length
-      ? '<div class="card-sub">No hay cometas destacados en este momento.</div>'
-      : cometas.map(c => {
+    if (!cometas.length) {
+      document.getElementById('cometas-data').innerHTML = '<div class="card-sub">No hay cometas destacados en este momento.</div>';
+      return;
+    }
+    const encabezado = `<div class="card-sub" style="margin-bottom:8px">Cometas destacados recientes · datos verificados al ${cometas[0].actualizado}</div>`;
+    document.getElementById('cometas-data').innerHTML = encabezado + cometas.map(c => {
           const vis = c.visible_simple_vista ? '👁 simple vista' : (c.visible_binoculares ? '🔭 binoculares' : '📡 telescopio');
+          const mag = c.magnitud_pico === null ? 'Magnitud máx.: sin dato fiable' : `Magnitud máx. ${c.magnitud_pico} (${vis})`;
           return `
             <div class="conj-item">
               <div class="opos-row">
                 <div class="card-value">☄️ ${c.nombre}</div>
                 <div class="opos-badge">${c.estado}</div>
               </div>
-              <div class="card-sub">Perihelio: ${c.fecha_perihelio} · ${c.tiempo} · Magnitud máx. ${c.magnitud_pico} (${vis})</div>
+              <div class="card-sub">Perihelio: ${c.fecha_perihelio} · ${c.tiempo} · ${mag}</div>
               <div class="card-sub texto-italico">${c.descripcion}</div>
+              <a class="enlace-fuente" href="${c.fuente}" target="_blank" rel="noopener">Fuente ↗</a>
             </div>`;
         }).join('');
   } catch { errorHTML('cometas-data'); }

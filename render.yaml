@@ -6,7 +6,7 @@ services:
     startCommand: gunicorn app:app
     envVars:
       - key: LAT
-        value: 0.18
+        value: -0.18
       - key: LON
         value: -78.47
       - key: ALT
