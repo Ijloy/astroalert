@@ -24,15 +24,14 @@ DIAS_ADELANTE = 800   # Marte tiene oposición cada ~26 meses
 A_SIMPLE_VISTA = 5.0  # en una ciudad casi nada más débil que mag 5 se ve a simple vista
 
 
-@cache_ttl(12 * 3600)
-def _calcular():
-    ahora = datetime.now(timezone.utc)
-    t0 = TS.from_datetime(ahora - timedelta(days=1))
-    t1 = TS.from_datetime(ahora + timedelta(days=DIAS_ADELANTE))
+def calcular_oposiciones(desde):
+    """Próxima oposición de cada planeta exterior a partir de `desde` (datetime UTC)."""
+    t0 = TS.from_datetime(desde - timedelta(days=1))
+    t1 = TS.from_datetime(desde + timedelta(days=DIAS_ADELANTE))
     eventos = []
     for nombre, planeta in PLANETAS_EXTERIORES.items():
         tiempos, tipos = almanac.find_discrete(t0, t1, almanac.oppositions_conjunctions(EPH, planeta))
-        for t, tipo in zip(tiempos, tipos):
+        for t, tipo in zip(tiempos, tipos, strict=True):
             if tipo != 1:      # 1 = oposición, 0 = conjunción con el Sol
                 continue
             obs  = TIERRA.at(t)
@@ -50,6 +49,11 @@ def _calcular():
             break              # solo la próxima de cada planeta
     eventos.sort(key=lambda e: e['fecha_utc'])
     return eventos
+
+
+@cache_ttl(12 * 3600)
+def _calcular():
+    return calcular_oposiciones(datetime.now(timezone.utc))
 
 
 def proximas_oposiciones():

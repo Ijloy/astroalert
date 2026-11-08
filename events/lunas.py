@@ -236,15 +236,15 @@ LUNAS = [
 ]
 
 def obtener_lunas():
-    return [{'id': l['id'], 'nombre': l['nombre'], 'planeta': l['planeta'], 'imagen': l['imagen']} for l in LUNAS]
+    return [{'id': luna['id'], 'nombre': luna['nombre'], 'planeta': luna['planeta'], 'imagen': luna['imagen']} for luna in LUNAS]
 
 def obtener_luna(luna_id):
-    for l in LUNAS:
-        if l['id'] == luna_id:
-            return l
+    for luna in LUNAS:
+        if luna['id'] == luna_id:
+            return luna
     return None
 
 if __name__ == '__main__':
     print(f'\n{len(LUNAS)} lunas cargadas:\n')
-    for l in LUNAS:
-        print(f"  {l['nombre']:<12}  {l['planeta']}")
+    for luna in LUNAS:
+        print(f"  {luna['nombre']:<12}  {luna['planeta']}")

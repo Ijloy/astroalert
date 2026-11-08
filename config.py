@@ -26,8 +26,8 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 if EN_PRODUCCION and (not SECRET_KEY or not JWT_SECRET_KEY):
     # Mejor no arrancar que arrancar con claves conocidas por todos.
     raise RuntimeError("En producción SECRET_KEY y JWT_SECRET_KEY son obligatorias.")
-SECRET_KEY     = SECRET_KEY or "dev-secret-solo-local"
-JWT_SECRET_KEY = JWT_SECRET_KEY or "dev-jwt-secret-solo-local"
+SECRET_KEY     = SECRET_KEY or "dev-secret-solo-local-no-usar-en-produccion"
+JWT_SECRET_KEY = JWT_SECRET_KEY or "dev-jwt-secret-solo-local-no-usar-en-produccion"
 
 # ── Base de datos ──
 # En Render/Neon/Supabase llega como postgres://...; SQLAlchemy necesita postgresql://

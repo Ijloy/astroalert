@@ -27,7 +27,7 @@ def distancia_km(lat1, lon1, lat2, lon2):
 if __name__ == "__main__":
     pos = posicion_actual()
     dist = distancia_km(LAT, LON, pos["lat"], pos["lon"])
-    print(f"\nISS ahora mismo:")
+    print("\nISS ahora mismo:")
     print(f" Posición: {pos['lat']}, {pos['lon']}")
     print(f" Altitud: {pos['altitud']} km")
     print(f" Velocidad: {pos['velocidad']} km/h")

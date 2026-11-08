@@ -6,7 +6,6 @@ Un planeta se considera visible solo si:
 Antes no se revisaba el Sol, así que a mediodía la app decía que Mercurio
 "se veía" a 70° de altura.
 """
-from datetime import timedelta
 
 import numpy as np
 from skyfield.magnitudelib import planetary_magnitude
@@ -55,14 +54,14 @@ def _posiciones(t):
 
 
 def estado_cielo(t=None):
-    t = t or TS.now()
+    t = TS.now() if t is None else t
     alt_sol = float(altura_sol(t))
     return {'altura_sol': round(alt_sol, 1), 'condicion': condicion_cielo(alt_sol)}
 
 
 def planetas_visibles(t=None):
     """Planetas visibles AHORA. Lista vacía si es de día o no hay ninguno arriba."""
-    t = t or TS.now()
+    t = TS.now() if t is None else t
     if altura_sol(t) > SOL_MAX:
         return []
     return _posiciones(t)
@@ -70,7 +69,7 @@ def planetas_visibles(t=None):
 
 def proxima_ventana(horas=36, desde=None):
     """Primer momento (cada 15 min) en que el cielo está oscuro y hay algún planeta arriba."""
-    inicio = desde or TS.now()
+    inicio = TS.now() if desde is None else desde
     pasos  = np.arange(1, int(horas * 60 / PASO_MINUTOS) + 1) * PASO_MINUTOS
     tiempos = TS.tt_jd(inicio.tt + pasos / 1440.0)
 

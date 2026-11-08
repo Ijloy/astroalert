@@ -66,10 +66,10 @@ def _eclipse_solar_global(t_luna_nueva):
     return tipo, tiempos[i]
 
 
-def _circunstancias_locales(t_centro):
-    """Cómo se ve el eclipse desde la ciudad: tipo, magnitud, horas y duración."""
+def _circunstancias_locales(t_centro, observador=OBSERVADOR):
+    """Cómo se ve el eclipse desde un lugar (por defecto, la ciudad configurada)."""
     tiempos = _tiempos_alrededor(t_centro, VENTANA_MIN, 30)
-    obs  = OBSERVADOR.at(tiempos)
+    obs  = observador.at(tiempos)
     sol  = obs.observe(SOL).apparent()
     luna = obs.observe(LUNA).apparent()
 
@@ -92,7 +92,7 @@ def _circunstancias_locales(t_centro):
         tipo_local = 'Total' if s_luna[i] > s_sol[i] else 'Anular'
         # Duración de la fase central, con resolución de 1 s alrededor del máximo
         fino = _tiempos_alrededor(tiempos[i], 8, 1)
-        o2 = OBSERVADOR.at(fino)
+        o2 = observador.at(fino)
         so, lu = o2.observe(SOL).apparent(), o2.observe(LUNA).apparent()
         central = so.separation_from(lu).degrees < np.abs(
             _semidiametro(R_LUNA_KM, lu.distance().km) - _semidiametro(R_SOL_KM, so.distance().km))
@@ -109,16 +109,16 @@ def _circunstancias_locales(t_centro):
     }
 
 
-def _eclipses_solares(t0, t1):
+def _eclipses_solares(t0, t1, observador=OBSERVADOR):
     tiempos, fases = almanac.find_discrete(t0, t1, almanac.moon_phases(EPH))
-    lunas_nuevas = [t for t, f in zip(tiempos, fases) if f == 0]
+    lunas_nuevas = [t for t, f in zip(tiempos, fases, strict=True) if f == 0]
     eventos = []
     for t_nueva in lunas_nuevas:
         g = _eclipse_solar_global(t_nueva)
         if not g:
             continue
         tipo, t_max = g
-        local = _circunstancias_locales(t_max)
+        local = _circunstancias_locales(t_max, observador)
         eventos.append({
             'tipo':      'Solar',
             'subtipo':   tipo,
@@ -132,7 +132,7 @@ def _eclipses_solares(t0, t1):
 def _eclipses_lunares(t0, t1):
     tiempos, tipos, _ = eclipselib.lunar_eclipses(t0, t1, EPH)
     eventos = []
-    for t, tipo in zip(tiempos, tipos):
+    for t, tipo in zip(tiempos, tipos, strict=True):
         alt, _, _ = OBSERVADOR.at(t).observe(LUNA).apparent().altaz()
         visible = bool(alt.degrees > 0)
         eventos.append({

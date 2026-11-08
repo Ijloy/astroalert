@@ -1,4 +1,4 @@
-from math import log10, sqrt
+from math import log10
 
 def calcular_telescopio(apertura_mm, focal_telescopio_mm, focal_ocular_mm, afov=52):
     """
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     # Ejemplo: telescopio 130mm f/7.7 con ocular de 10mm
     resultado = calcular_telescopio(130, 1000, 10)
     r = resultado['resultados']
-    print(f"\nTelescopio 130mm f/7.7 — Ocular 10mm\n")
+    print("\nTelescopio 130mm f/7.7 — Ocular 10mm\n")
     print(f"  Magnificación:       {r['magnificacion']}x")
     print(f"  Relación focal:      {r['relacion_focal']}")
     print(f"  Campo visual:        {r['campo_visual']}°")
