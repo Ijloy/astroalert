@@ -63,6 +63,10 @@
         <label for="reg-username">Nombre de usuario (opcional)</label>
         <input type="text" id="reg-username" autocomplete="username">
       </div>
+      <label class="check-row" for="reg-alertas">
+        <input type="checkbox" id="reg-alertas">
+        <span>Quiero recibir por correo el resumen del cielo de cada noche y avisos de la ISS</span>
+      </label>
       <button class="btn-primary ripple" onclick="registrarse()">Crear cuenta</button>
       <p id="reg-error" class="error" role="alert"></p>
     </div>
@@ -115,6 +119,12 @@
       <button class="sidebar-item sidebar-item-pronto" onclick="irSeccion('proximamente')">📚 Guías para principiantes</button>
     </div>
     <div class="sidebar-section hidden" id="sidebar-sesion">
+      <div class="sidebar-section-title">Mi cuenta</div>
+      <div class="sidebar-cuenta-email" id="cuenta-email"></div>
+      <label class="check-row sidebar-check" for="toggle-alertas">
+        <input type="checkbox" id="toggle-alertas" onchange="cambiarAlertas(this.checked)">
+        <span>Recibir alertas por correo</span>
+      </label>
       <button class="sidebar-item" onclick="cerrarSesion()">← Cerrar sesión</button>
     </div>
   </nav>

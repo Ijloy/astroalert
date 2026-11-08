@@ -1499,3 +1499,17 @@ input:focus {
   font-size: 12px;
   color: var(--acento-2);
 }
+
+/* FASE 2 — preferencias de alertas */
+.check-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 13px;
+  color: var(--texto-sub);
+  cursor: pointer;
+  line-height: 1.4;
+}
+.check-row input { width: auto; margin-top: 2px; accent-color: var(--primario); }
+.sidebar-check { padding: 8px 20px; }
+.sidebar-cuenta-email { padding: 2px 20px 6px; font-size: 12px; color: var(--texto); word-break: break-all; }

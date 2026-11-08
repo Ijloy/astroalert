@@ -141,7 +141,8 @@ async function registrarse() {
     const res = await fetch(`${API}/api/registro`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, confirmar_password: confirmar, username: username || null })
+      body: JSON.stringify({ email, password, confirmar_password: confirmar, username: username || null,
+                             recibir_alertas: document.getElementById('reg-alertas').checked })
     });
     const data = await res.json();
     if (!res.ok) { error.textContent = data.error || 'No se pudo crear la cuenta'; return; }
@@ -164,6 +165,38 @@ function actualizarEstadoSesion() {
   const logueado = !!getToken();
   document.getElementById('btn-cuenta').textContent = logueado ? 'Mi cuenta' : 'Iniciar sesión';
   document.getElementById('sidebar-sesion').classList.toggle('hidden', !logueado);
+  if (logueado) cargarPerfil();
+}
+
+async function fetchConToken(path, opciones = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opciones,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}`, ...(opciones.headers || {}) },
+  });
+  if (res.status === 401 || res.status === 422) {   // token vencido o inválido
+    removeToken();
+    actualizarEstadoSesion();
+    throw new Error('sesión expirada');
+  }
+  return res;
+}
+
+async function cargarPerfil() {
+  try {
+    const perfil = await (await fetchConToken('/api/perfil')).json();
+    document.getElementById('cuenta-email').textContent = perfil.email;
+    document.getElementById('toggle-alertas').checked = !!perfil.recibir_alertas;
+  } catch { /* sin sesión válida: ya se cerró */ }
+}
+
+async function cambiarAlertas(activar) {
+  const check = document.getElementById('toggle-alertas');
+  try {
+    const res = await fetchConToken('/api/perfil/alertas', { method: 'PATCH', body: JSON.stringify({ recibir_alertas: activar }) });
+    if (!res.ok) throw new Error();
+  } catch {
+    check.checked = !activar;   // revertir si falló
+  }
 }
 
 // ── UTILIDADES ──
@@ -268,7 +301,7 @@ async function cargarDestacadoOposicion() {
       titulo: `Oposición de ${o.planeta}`,
       fecha:  o.fecha_local,
       cuenta: o.cuenta_regresiva.texto,
-      tag:    `Magnitud ${o.magnitud} · ${o.simple_vista ? 'a simple vista' : 'con telescopio'}`,
+      tag:    `Magnitud ${o.magnitud} · ${o.simple_vista ? 'a simple vista' : 'con binoculares'}`,
     });
   } catch { llenarDestacado('oposicion', { titulo: 'No disponible' }); }
 }

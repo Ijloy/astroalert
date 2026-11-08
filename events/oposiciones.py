@@ -21,7 +21,7 @@ PLANETAS_EXTERIORES = {
 }
 
 DIAS_ADELANTE = 800   # Marte tiene oposición cada ~26 meses
-A_SIMPLE_VISTA = 6.0  # magnitud límite aproximada en un cielo oscuro
+A_SIMPLE_VISTA = 5.0  # en una ciudad casi nada más débil que mag 5 se ve a simple vista
 
 
 @cache_ttl(12 * 3600)
