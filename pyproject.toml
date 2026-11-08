@@ -1,0 +1,13 @@
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["venv", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "B", "I"]
+ignore = ["E501", "B008", "I001"]

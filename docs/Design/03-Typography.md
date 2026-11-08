@@ -369,6 +369,28 @@ Every text element must have a clear purpose.
 
 ---
 
+# Implementation Tokens
+
+Defined in `static/style.css` (`:root`).
+
+| Role | Typeface | Token |
+|---|---|---|
+| Display (hero, titles) | Space Grotesk | `--font-display` |
+| Body and interface | Inter | `--font-texto` |
+| Astronomical data, dates, countdowns | Space Mono | `--font-datos` |
+
+| Token | Size | Use |
+|---|---|---|
+| `--fs-display` | `clamp(34px, 6vw, 56px)` | Hero title |
+| `--fs-xl` | 30px | Section title (H1) |
+| `--fs-lg` | 22px | Detail titles |
+| `--fs-md` | 17px | Card and event titles |
+| `--fs-base` | 15px | Body text |
+| `--fs-sm` | 13px | Secondary text |
+| `--fs-xs` | 12px | Metadata, captions |
+
+---
+
 # Final Statement
 
 Typography is the voice of AstroAlert.

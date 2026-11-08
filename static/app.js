@@ -1,531 +1,721 @@
-const API = 'https://astroalert-pgyw.onrender.com';
+/* ═══════════════════════════════════════════════════════════════
+   AstroAlert — frontend
+   La API vive en el mismo servidor (Flask), por eso las rutas son relativas.
+   Índice: utilidades · navegación · cuenta · inicio · secciones · arranque
+   ═══════════════════════════════════════════════════════════════ */
+'use strict';
 
-function getToken()    { return localStorage.getItem('token'); }
-function setToken(t)   { localStorage.setItem('token', t); }
-function removeToken() { localStorage.removeItem('token'); }
+const API = '';
+const CIUDAD = 'Quito';
 
-// ── RIPPLE ──
-document.addEventListener('click', function(e) {
-  const btn = e.target.closest('.ripple');
-  if (!btn) return;
-  const circle = document.createElement('span');
-  const rect   = btn.getBoundingClientRect();
-  const size   = Math.max(rect.width, rect.height);
-  circle.classList.add('ripple-effect');
-  circle.style.width  = circle.style.height = size + 'px';
-  circle.style.left   = e.clientX - rect.left - size/2 + 'px';
-  circle.style.top    = e.clientY - rect.top  - size/2 + 'px';
-  btn.appendChild(circle);
-  setTimeout(() => circle.remove(), 600);
+// ═════════════ UTILIDADES ═════════════
+const $ = id => document.getElementById(id);
+
+async function getJSON(path) {
+  const res = await fetch(`${API}${path}`);
+  if (!res.ok) throw new Error(`${path} → ${res.status}`);
+  return res.json();
+}
+
+/** Escapa texto antes de insertarlo como HTML. */
+function esc(valor) {
+  return String(valor ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/** Números con formato de Ecuador: 2.457 km, 18,4 UA. */
+function num(n, decimales = 0) {
+  return Number(n).toLocaleString('es-EC', { minimumFractionDigits: 0, maximumFractionDigits: decimales });
+}
+
+function horasTexto(minutos) {
+  const h = Math.floor(minutos / 60), m = minutos % 60;
+  return h ? `${h} h${m ? ` ${m} min` : ''}` : `${m} min`;
+}
+
+function cargandoHTML(lineas = 3) {
+  return '<div aria-busy="true" aria-label="Cargando">' +
+    '<span class="skeleton skeleton-linea larga"></span>' +
+    Array.from({ length: lineas }, (_, i) => `<span class="skeleton skeleton-linea ${i % 2 ? 'corta' : ''}"></span>`).join('') +
+    '</div>';
+}
+
+/** Estado de error con botón "Reintentar" (patrón de errores de docs/UX). */
+function mostrarError(id, reintentar) {
+  const cont = $(id);
+  cont.innerHTML = `
+    <div class="estado-error">
+      <p>No pudimos obtener esta información ahora mismo. Inténtalo de nuevo en unos minutos.</p>
+      <button class="btn btn-secundario btn-sm" type="button">Reintentar</button>
+    </div>`;
+  cont.querySelector('button').addEventListener('click', reintentar);
+}
+
+// Si una foto no carga (enlace roto, sin red), se muestra una luna ilustrada en su lugar.
+const IMG_RESPALDO = 'data:image/svg+xml,' + encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx="35%" cy="35%">' +
+  '<stop offset="0" stop-color="#9370DB"/><stop offset="1" stop-color="#2C1E5C"/></radialGradient></defs>' +
+  '<rect width="100" height="100" fill="#120C26"/><circle cx="50" cy="50" r="34" fill="url(#g)"/></svg>');
+
+function conRespaldo(contenedor) {
+  contenedor.querySelectorAll('img').forEach(img => {
+    img.addEventListener('error', () => { img.src = IMG_RESPALDO; }, { once: true });
+  });
+}
+
+async function imagenNasa(query, elementId) {
+  try {
+    const data  = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`).then(r => r.json());
+    const items = data.collection?.items || [];
+    if (!items.length) return;
+    const item = items[Math.floor(Math.random() * Math.min(items.length, 10))];
+    const link = item.links?.find(l => l.rel === 'preview');
+    if (link && $(elementId)) $(elementId).style.backgroundImage = `url('${link.href}')`;
+  } catch { /* imagen decorativa: si falla, la tarjeta se ve igual */ }
+}
+
+// ═════════════ NAVEGACIÓN (URLs reales: /eclipses, /iss…) ═════════════
+const VISTAS = {
+  '/':             { id: 'inicio',       titulo: null },
+  '/iss':          { id: 'iss',          titulo: 'ISS en vivo',              cargar: cargarISS, siempre: true },
+  '/planetas':     { id: 'planetas',     titulo: 'Planetas visibles',        cargar: cargarPlanetas, siempre: true },
+  '/eclipses':     { id: 'eclipses',     titulo: 'Eclipses',                 cargar: cargarEclipses },
+  '/conjunciones': { id: 'conjunciones', titulo: 'Conjunciones planetarias', cargar: cargarConjunciones },
+  '/oposiciones':  { id: 'oposiciones',  titulo: 'Oposiciones',              cargar: cargarOposiciones },
+  '/cometas':      { id: 'cometas',      titulo: 'Cometas',                  cargar: cargarCometas },
+  '/lunas':        { id: 'lunas',        titulo: 'Lunas del sistema solar',  cargar: cargarLunas },
+  '/telescopio':   { id: 'telescopio',   titulo: 'Calculadora de telescopio', cargar: cargarImagenTelescopio },
+  '/proximamente': { id: 'proximamente', titulo: 'En desarrollo' },
+};
+const cargadas = new Set();
+
+function mostrarVista(ruta, { enfocar = true } = {}) {
+  const vista = VISTAS[ruta] || VISTAS['/'];
+  document.querySelectorAll('.vista').forEach(v => { v.hidden = v.id !== `vista-${vista.id}`; });
+
+  document.querySelectorAll('.sidebar-item[href]').forEach(a => {
+    if (a.getAttribute('href') === ruta) a.setAttribute('aria-current', 'page');
+    else a.removeAttribute('aria-current');
+  });
+
+  document.title = vista.titulo ? `${vista.titulo} · AstroAlert` : 'AstroAlert — Eventos astronómicos visibles desde Quito';
+  cerrarSidebar();
+  window.scrollTo({ top: 0 });
+
+  if (vista.cargar && (vista.siempre || !cargadas.has(vista.id))) {
+    cargadas.add(vista.id);
+    vista.cargar();
+  }
+  // Para lectores de pantalla: llevar el foco al título de la nueva vista
+  if (enfocar) {
+    const h1 = document.querySelector(`#vista-${vista.id} h1`);
+    (h1 || $('contenido')).focus({ preventScroll: true });
+  }
+}
+
+function navegar(ruta) {
+  if (ruta !== location.pathname) history.pushState({}, '', ruta);
+  mostrarVista(ruta);
+}
+
+document.addEventListener('click', e => {
+  const enlace = e.target.closest('a[data-link]');
+  if (!enlace || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+  e.preventDefault();
+  navegar(enlace.getAttribute('href'));
+});
+window.addEventListener('popstate', () => mostrarVista(location.pathname));
+
+// ── Menú lateral ──
+function abrirSidebar() {
+  $('sidebar').classList.add('abierto');
+  $('sidebar-overlay').classList.add('activo');
+  $('btn-menu').setAttribute('aria-expanded', 'true');
+  $('sidebar').querySelector('a, button')?.focus();
+}
+function cerrarSidebar() {
+  if (!$('sidebar').classList.contains('abierto')) return;
+  $('sidebar').classList.remove('abierto');
+  $('sidebar-overlay').classList.remove('activo');
+  $('btn-menu').setAttribute('aria-expanded', 'false');
+}
+const sidebarFijo = () => window.matchMedia('(min-width: 1200px)').matches;
+
+$('btn-menu').addEventListener('click', () => ($('sidebar').classList.contains('abierto') ? cerrarSidebar() : abrirSidebar()));
+$('sidebar-overlay').addEventListener('click', cerrarSidebar);
+
+// ═════════════ CUENTA (opcional: solo para alertas) ═════════════
+const getToken    = () => localStorage.getItem('token');
+const setToken    = t => localStorage.setItem('token', t);
+const removeToken = () => localStorage.removeItem('token');
+let focoAntesDeDialogo = null;
+
+function abrirDialogo(id) {
+  cerrarDialogos(false);
+  focoAntesDeDialogo = focoAntesDeDialogo || document.activeElement;
+  $(id).hidden = false;
+  $(id).querySelector('input')?.focus();
+}
+function cerrarDialogos(devolverFoco = true) {
+  ['login-panel', 'registro-panel'].forEach(id => { $(id).hidden = true; });
+  if (devolverFoco && focoAntesDeDialogo) { focoAntesDeDialogo.focus(); focoAntesDeDialogo = null; }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('login-panel').hidden || !$('registro-panel').hidden) cerrarDialogos();
+  else cerrarSidebar();
+});
+document.querySelectorAll('[data-cerrar-auth]').forEach(b => b.addEventListener('click', () => cerrarDialogos()));
+document.querySelectorAll('.auth-overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) cerrarDialogos(); }));
+$('btn-ir-registro').addEventListener('click', () => abrirDialogo('registro-panel'));
+$('btn-ir-login').addEventListener('click', () => abrirDialogo('login-panel'));
+
+$('btn-cuenta').addEventListener('click', () => {
+  if (!getToken()) return abrirDialogo('login-panel');
+  if (!sidebarFijo()) abrirSidebar();
+  $('toggle-alertas').focus();
 });
 
-// ── SIDEBAR ──
-function toggleSidebar() {
-  document.getElementById('sidebar').classList.toggle('open');
-  document.getElementById('sidebar-overlay').classList.toggle('active');
+function mensaje(id, texto, ok = false) {
+  $(id).textContent = texto;
+  $(id).classList.toggle('ok', ok);
 }
 
-function closeSidebar() {
-  document.getElementById('sidebar').classList.remove('open');
-  document.getElementById('sidebar-overlay').classList.remove('active');
+async function enviarConBoton(form, accion) {
+  const boton = form.querySelector('button[type="submit"]');
+  boton.disabled = true;
+  try { await accion(); } finally { boton.disabled = false; }
 }
 
-function expandirSub(id) {
-  const sub   = document.getElementById(id);
-  const arrow = document.getElementById('arrow-' + id);
-  sub.classList.toggle('hidden');
-  arrow.classList.toggle('rotado');
-}
-
-// ── NAVEGACIÓN ──
-const secciones = ['iss', 'planetas', 'eclipses', 'conjunciones', 'lunas', 'oposiciones', 'telescopio', 'proximamente'];
-const cargados  = {};
-
-function irSeccion(seccion) {
-      document.querySelectorAll('.nav-revista-item').forEach(b => b.classList.remove('active'));
-      const navBtn = Array.from(document.querySelectorAll('.nav-revista-item'))
-        .find(b => b.getAttribute('onclick')?.includes(`'${seccion}'`));
-      if (navBtn) navBtn.classList.add('active');
-  closeSidebar();
-
-  // Ocultar carrusel y grid cuando se abre una sección
-  const seccEnContenido = ['iss','planetas','eclipses','conjunciones','lunas', 'oposiciones', 'telescopio'];
-  const tieneContenido  = seccEnContenido.includes(seccion);
-
-  document.querySelector('.carrusel-wrapper').style.display = tieneContenido ? 'none' : 'block';
-  document.querySelector('.cards-grid').style.display       = tieneContenido ? 'none' : 'grid';
-
-  secciones.forEach(s => document.getElementById(`sec-${s}`) && document.getElementById(`sec-${s}`).classList.add('hidden'));
-
-  const secEl = document.getElementById(`sec-${seccion}`) || document.getElementById('sec-proximamente');
-  if (secEl) secEl.classList.remove('hidden');
-
-  if (!cargados[seccion]) {
-    cargados[seccion] = true;
-    if (seccion === 'iss')          cargarISS();
-    if (seccion === 'planetas')     cargarPlanetas();
-    if (seccion === 'eclipses')     cargarEclipses();
-    if (seccion === 'conjunciones') cargarConjunciones();
-    if (seccion === 'lunas')        cargarLunas();
-    if (seccion === 'oposiciones')  cargarOposiciones();
-    if (seccion === 'telescopio') cargarImagenTelescopio();
-}
-}
-
-function volverMenu() {
-  secciones.forEach(s => {
-    const el = document.getElementById(`sec-${s}`);
-    if (el) el.classList.add('hidden');
-  });
-  document.getElementById('luna-detalle').innerHTML = `
-    <div class="card-sub" style="text-align:center;padding:20px">Selecciona una luna</div>
-  `;
-  document.getElementById('lunas-lista').innerHTML = '';
-  Object.keys(cargados).forEach(k => delete cargados[k]);
-  document.querySelector('.carrusel-wrapper').style.display = 'block';
-  document.querySelector('.cards-grid').style.display = 'grid';
-}
-
-// ── AUTH ──
-function volverLogin() {
-  document.getElementById('registro-panel').classList.add('hidden');
-  document.getElementById('login-panel').classList.remove('hidden');
-  document.getElementById('reg-error').textContent = '';
-}
-
-function irARegistro() {
-  document.getElementById('login-panel').classList.add('hidden');
-  document.getElementById('registro-panel').classList.remove('hidden');
-}
-
-async function login() {
-  const email    = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  const error    = document.getElementById('auth-error');
-  const res  = await fetch(`${API}/api/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password })
-  });
-  const data = await res.json();
-  if (!res.ok) { error.textContent = data.error; return; }
-  setToken(data.token);
-  mostrarApp();
-}
-
-async function registrarse() {
-  const error = document.getElementById('reg-error');
-  error.textContent = '';
-  const email     = document.getElementById('reg-email').value.trim();
-  const password  = document.getElementById('reg-password').value;
-  const confirmar = document.getElementById('reg-confirmar').value;
-  const username  = document.getElementById('reg-username').value.trim();
-  const dia       = document.getElementById('reg-dia').value.padStart(2,'0');
-  const mes       = document.getElementById('reg-mes').value.padStart(2,'0');
-  const anio      = document.getElementById('reg-anio').value;
-  const codigo    = document.getElementById('reg-codigo').value;
-  const telefono  = document.getElementById('reg-telefono').value.trim();
-
-  if (!email || !password || !confirmar) { error.textContent = 'Email y contraseña requeridos'; return; }
-  if (password !== confirmar)            { error.textContent = 'Las contraseñas no coinciden'; return; }
-  if (password.length < 6)              { error.textContent = 'Mínimo 6 caracteres'; return; }
-
-  let fecha_nacimiento = null;
-  if (dia && mes && anio) {
-    const fechaStr = `${anio}-${mes}-${dia}`;
-    const fecha    = new Date(fechaStr);
-    if (isNaN(fecha.getTime()) || fecha.getMonth() + 1 !== parseInt(mes)) {
-      error.textContent = 'Fecha inválida'; return;
-    }
-    fecha_nacimiento = fechaStr;
-  }
-
-  if (telefono && !/^\d{7,15}$/.test(telefono)) { error.textContent = 'Teléfono inválido'; return; }
-
-  const res = await fetch(`${API}/api/registro`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, confirmar_password: confirmar, username, fecha_nacimiento, telefono_codigo: codigo, telefono_numero: telefono })
-  });
-  const data = await res.json();
-  if (!res.ok) { error.textContent = data.error; return; }
-  volverLogin();
-  document.getElementById('auth-error').style.color = '#34d399';
-  document.getElementById('auth-error').textContent = '¡Cuenta creada! Ahora inicia sesión.';
-}
-
-function cerrarSesion() {
-  removeToken();
-  closeSidebar();
-  document.getElementById('main-panel').classList.add('hidden');
-  document.getElementById('login-panel').classList.remove('hidden');
-}
-
-function mostrarApp() {
-  document.getElementById('login-panel').classList.add('hidden');
-  document.getElementById('registro-panel').classList.add('hidden');
-  const transicion = document.getElementById('transicion-panel');
-  transicion.classList.remove('hidden');
-  setTimeout(() => {
-    transicion.classList.add('hidden');
-    document.getElementById('main-panel').classList.remove('hidden');
-    iniciarCarrusel();
-  }, 2000);
-}
-
-// ── CARRUSEL ──
-function iniciarCarrusel() {
-  const carrusel = document.getElementById('carrusel');
-  const dots     = document.getElementById('carrusel-dots');
-  const items    = carrusel.querySelectorAll('.carrusel-item');
-  let actual     = 0;
-
-  dots.innerHTML = '';
-  items.forEach((_, i) => {
-    const dot = document.createElement('div');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.onclick = () => irSlide(i);
-    dots.appendChild(dot);
-  });
-
-  function irSlide(i) {
-    actual = i;
-    carrusel.scrollTo({ left: carrusel.offsetWidth * i, behavior: 'smooth' });
-    dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
-  }
-
-  // Auto-scroll cada 4 segundos
-  setInterval(() => irSlide((actual + 1) % items.length), 8000);
-
-  carrusel.addEventListener('scroll', () => {
-    const i = Math.round(carrusel.scrollLeft / carrusel.offsetWidth);
-    if (i !== actual) {
-      actual = i;
-      dots.querySelectorAll('.dot').forEach((d, idx) => d.classList.toggle('active', idx === i));
+$('form-login').addEventListener('submit', e => {
+  e.preventDefault();
+  enviarConBoton(e.target, async () => {
+    mensaje('auth-error', '');
+    try {
+      const res = await fetch(`${API}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: $('email').value.trim(), password: $('password').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) return mensaje('auth-error', data.error || 'No se pudo iniciar sesión');
+      setToken(data.token);
+      e.target.reset();
+      cerrarDialogos();
+      actualizarEstadoSesion();
+    } catch {
+      mensaje('auth-error', 'No pudimos conectar con el servidor. Inténtalo de nuevo.');
     }
   });
+});
+
+$('form-registro').addEventListener('submit', e => {
+  e.preventDefault();
+  enviarConBoton(e.target, async () => {
+    mensaje('reg-error', '');
+    const email = $('reg-email').value.trim(), password = $('reg-password').value, confirmar = $('reg-confirmar').value;
+    if (!email || !password)    return mensaje('reg-error', 'Email y contraseña son requeridos');
+    if (password.length < 8)    return mensaje('reg-error', 'La contraseña debe tener al menos 8 caracteres');
+    if (password !== confirmar) return mensaje('reg-error', 'Las contraseñas no coinciden');
+    try {
+      const res = await fetch(`${API}/api/registro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email, password, confirmar_password: confirmar,
+          username: $('reg-username').value.trim() || null,
+          recibir_alertas: $('reg-alertas').checked,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return mensaje('reg-error', data.error || 'No se pudo crear la cuenta');
+      e.target.reset();
+      abrirDialogo('login-panel');
+      $('email').value = email;
+      $('password').focus();
+      mensaje('auth-error', '¡Cuenta creada! Ahora inicia sesión.', true);
+    } catch {
+      mensaje('reg-error', 'No pudimos conectar con el servidor. Inténtalo de nuevo.');
+    }
+  });
+});
+
+async function fetchConToken(path, opciones = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opciones,
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+  });
+  if (res.status === 401 || res.status === 422) {   // token vencido o inválido
+    removeToken();
+    actualizarEstadoSesion();
+    throw new Error('sesión expirada');
+  }
+  return res;
 }
 
-// ── DATOS ──
-async function cargarISS() {
+function actualizarEstadoSesion() {
+  const logueado = !!getToken();
+  $('btn-cuenta').textContent = logueado ? 'Mi cuenta' : 'Iniciar sesión';
+  $('sidebar-sesion').hidden = !logueado;
+  if (logueado) cargarPerfil();
+}
+
+async function cargarPerfil() {
   try {
-    const res  = await fetch(`${API}/api/iss`);
-    const data = await res.json();
+    const perfil = await (await fetchConToken('/api/perfil')).json();
+    $('cuenta-email').textContent = perfil.email;
+    $('toggle-alertas').checked = !!perfil.recibir_alertas;
+  } catch { /* sesión expirada: ya se cerró */ }
+}
+
+$('toggle-alertas').addEventListener('change', async e => {
+  const activar = e.target.checked;
+  try {
+    const res = await fetchConToken('/api/perfil/alertas', { method: 'PATCH', body: JSON.stringify({ recibir_alertas: activar }) });
+    if (!res.ok) throw new Error();
+  } catch {
+    e.target.checked = !activar;   // revertir si falló
+  }
+});
+
+$('btn-cerrar-sesion').addEventListener('click', () => {
+  removeToken();
+  cerrarSidebar();
+  actualizarEstadoSesion();
+  $('btn-cuenta').focus();
+});
+
+// ═════════════ INICIO ═════════════
+function cargarInicio() {
+  imagenNasa('milky way night sky', 'hero-bg');
+  imagenNasa('solar eclipse', 'dest-eclipse-img');
+  imagenNasa('jupiter saturn conjunction', 'dest-conjuncion-img');
+  imagenNasa('mars planet', 'dest-oposicion-img');
+  imagenNasa('comet tail', 'dest-cometa-img');
+  imagenNasa('telescope observatory night', 'herramienta-tel-img');
+
+  actualizarHeroISS();
+  setInterval(actualizarHeroISS, 30000);
+
+  cargarDestacadoEclipse();
+  cargarDestacadoConjuncion();
+  cargarDestacadoOposicion();
+  cargarDestacadoCometa();
+  cargarPlanetasInicio();
+  cargarImagenDia();
+}
+
+async function actualizarHeroISS() {
+  try {
+    const data = await getJSON('/api/iss');
+    $('hero-iss-alt').textContent  = `${num(data.posicion.altitud)} km`;
+    $('hero-iss-dist').textContent = `${num(data.distancia_desde_ciudad)} km`;
+    $('hero-iss-sub').textContent  = 'Estación Espacial Internacional';
+  } catch {
+    $('hero-iss-sub').textContent = 'Sin conexión con el rastreador ahora mismo';
+  }
+}
+
+function llenarDestacado(prefijo, { titulo, fecha = '', cuenta = '', tag = '', visible = false }) {
+  const t = $(`dest-${prefijo}-titulo`);
+  t.textContent = titulo;
+  t.classList.remove('skeleton');
+  $(`dest-${prefijo}-fecha`).textContent  = fecha;
+  $(`dest-${prefijo}-cuenta`).textContent = cuenta;
+  $(`dest-${prefijo}-tag`).textContent    = tag;
+  $(`dest-${prefijo}-tag`).classList.toggle('si', visible);
+}
+
+async function cargarDestacadoEclipse() {
+  try {
+    const { eclipses } = await getJSON('/api/eclipses');
+    const e = eclipses.find(x => x.visible_local) || eclipses[0];
+    if (!e) return llenarDestacado('eclipse', { titulo: 'Sin eclipses próximos' });
+    const tipo = e.tipo === 'Solar' && e.local ? e.local.tipo : e.subtipo;
+    llenarDestacado('eclipse', {
+      titulo:  `Eclipse ${e.tipo.toLowerCase()} ${tipo.toLowerCase()}`,
+      fecha:   e.fecha_local,
+      cuenta:  e.cuenta_regresiva.texto,
+      tag:     e.visible_local ? `✓ Visible desde ${CIUDAD}` : `No visible desde ${CIUDAD}`,
+      visible: e.visible_local,
+    });
+  } catch { llenarDestacado('eclipse', { titulo: 'No disponible por ahora' }); }
+}
+
+async function cargarDestacadoConjuncion() {
+  try {
+    const { conjunciones } = await getJSON('/api/conjunciones');
+    const c = conjunciones.find(x => x.observable) || conjunciones[0];
+    if (!c) return llenarDestacado('conjuncion', { titulo: 'Ninguna en los próximos meses' });
+    llenarDestacado('conjuncion', {
+      titulo:  `${c.planeta1} y ${c.planeta2}`,
+      fecha:   c.fecha_local,
+      cuenta:  c.cuenta_regresiva.texto,
+      tag:     `Separación: ${num(c.separacion, 1)}°`,
+      visible: c.observable,
+    });
+  } catch { llenarDestacado('conjuncion', { titulo: 'No disponible por ahora' }); }
+}
+
+async function cargarDestacadoOposicion() {
+  try {
+    const { oposiciones } = await getJSON('/api/oposiciones');
+    const o = oposiciones[0];
+    if (!o) return llenarDestacado('oposicion', { titulo: 'Ninguna próxima' });
+    llenarDestacado('oposicion', {
+      titulo:  `Oposición de ${o.planeta}`,
+      fecha:   o.fecha_local,
+      cuenta:  o.cuenta_regresiva.texto,
+      tag:     `Magnitud ${num(o.magnitud, 1)} · ${o.simple_vista ? 'a simple vista' : 'con binoculares'}`,
+      visible: o.simple_vista,
+    });
+  } catch { llenarDestacado('oposicion', { titulo: 'No disponible por ahora' }); }
+}
+
+async function cargarDestacadoCometa() {
+  try {
+    const { cometas } = await getJSON('/api/cometas');
+    const c = cometas[0];
+    if (!c) return llenarDestacado('cometa', { titulo: 'Sin cometas destacados' });
+    llenarDestacado('cometa', {
+      titulo: c.nombre,
+      fecha:  `Perihelio: ${c.fecha_perihelio}`,
+      cuenta: c.tiempo,
+      tag:    c.visible_simple_vista ? 'Llegó a verse a simple vista' : (c.visible_binoculares ? 'Con binoculares' : 'Solo con telescopio'),
+    });
+  } catch { llenarDestacado('cometa', { titulo: 'No disponible por ahora' }); }
+}
+
+// Colores reales aproximados de cada planeta (precisión antes que paleta)
+const COLORES_PLANETA = {
+  Mercurio: 'radial-gradient(circle at 35% 35%, #d6d3d1, #78716c)',
+  Venus:    'radial-gradient(circle at 35% 35%, #fef3c7, #d97706)',
+  Marte:    'radial-gradient(circle at 35% 35%, #fca5a5, #b91c1c)',
+  Júpiter:  'radial-gradient(circle at 35% 35%, #fde68a, #a16207)',
+  Saturno:  'radial-gradient(circle at 35% 35%, #fef9c3, #ca8a04)',
+};
+
+function planetaMini(p) {
+  return `
+    <span class="planeta-mini">
+      <span class="planeta-icono" style="background:${COLORES_PLANETA[p.planeta] || '#334155'}" aria-hidden="true"></span>
+      <span class="planeta-nombre">${esc(p.planeta)}</span>
+      <span class="planeta-estado">${num(p.altitud)}° · ${esc(p.direccion)}</span>
+    </span>`;
+}
+
+async function cargarPlanetasInicio() {
+  try {
+    const data = await getJSON('/api/planetas');
+    if (data.visibles_ahora && data.planetas?.length) {
+      $('planetas-visibles-sub').textContent = 'Sobre el horizonte ahora mismo';
+      $('planetas-visibles-grid').innerHTML  = data.planetas.map(planetaMini).join('');
+    } else if (data.proxima_ventana) {
+      const v = data.proxima_ventana;
+      const motivo = data.cielo?.condicion === 'noche' ? 'Ninguno sobre el horizonte' : `Ahora es de ${data.cielo?.condicion || 'día'}`;
+      $('planetas-visibles-sub').textContent = `${motivo}. Se verán desde las ${v.hora_local} (en ${horasTexto(v.en_minutos)})`;
+      $('planetas-visibles-grid').innerHTML  = v.planetas.map(planetaMini).join('');
+    } else {
+      $('planetas-visibles-sub').textContent = 'Ningún planeta visible en las próximas horas.';
+      $('planetas-visibles-grid').innerHTML  = '';
+    }
+  } catch {
+    $('planetas-visibles-sub').textContent = 'No disponible por ahora.';
+    $('planetas-visibles-grid').innerHTML  = '';
+  }
+}
+
+async function cargarImagenDia() {
+  try {
+    const data = await getJSON('/api/imagen-dia');
+    if (data.url)    $('imagen-dia-img').style.backgroundImage = `url('${data.url}')`;
+    if (data.titulo) $('imagen-dia-titulo').textContent = data.titulo;
+    if (data.pagina) $('card-imagen-dia').href = data.pagina;
+  } catch {
+    imagenNasa('nebula', 'imagen-dia-img');
+  }
+}
+
+// ═════════════ SECCIONES ═════════════
+async function cargarISS() {
+  const id = 'iss-data';
+  if (!$(id).children.length) $(id).innerHTML = cargandoHTML(2);
+  try {
+    const data = await getJSON('/api/iss');
     const pos  = data.posicion;
-    document.getElementById('iss-data').innerHTML = `
-      <div class="card-value">A <strong>${data.distancia_desde_ciudad.toLocaleString()} km</strong> de Quito</div>
-      <div class="card-sub">Lat ${pos.lat} · Lon ${pos.lon} · Alt ${pos.altitud} km</div>
-      <div class="card-sub">Velocidad: ${pos.velocidad.toLocaleString()} km/h</div>
-      <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>
-    `;
-  } catch { document.getElementById('iss-data').textContent = 'Error al cargar'; }
+    $(id).innerHTML = `
+      <div class="evento">
+        <span class="dato-etiqueta">Distancia a ${esc(data.ciudad)} (sobre la superficie)</span>
+        <span class="dato-grande">${num(data.distancia_desde_ciudad)} km</span>
+        <div class="evento-datos">
+          <span>Latitud <strong>${num(pos.lat, 2)}°</strong></span>
+          <span>Longitud <strong>${num(pos.lon, 2)}°</strong></span>
+          <span>Altitud <strong>${num(pos.altitud)} km</strong></span>
+          <span>Velocidad <strong>${num(pos.velocidad)} km/h</strong></span>
+        </div>
+        <p class="evento-nota">Se actualiza cada vez que entras a esta sección.</p>
+      </div>`;
+  } catch { mostrarError(id, cargarISS); }
 }
 
 async function cargarPlanetas() {
+  const id = 'planetas-data';
+  if (!$(id).children.length) $(id).innerHTML = cargandoHTML();
   try {
-    const res  = await fetch(`${API}/api/planetas`);
-    const data = await res.json();
-    let html = '';
-    if (data.visibles_ahora && data.planetas && data.planetas.length > 0) {
-      html = data.planetas.map(p =>
-        `<div class="card-value">${p.planeta} — ${p.altitud}° hacia el ${p.direccion}</div>`
-      ).join('');
+    const data = await getJSON('/api/planetas');
+    const fila = p => `
+      <div class="evento">
+        <div class="evento-fila">
+          <span class="evento-titulo">${esc(p.planeta)}</span>
+          <span class="estado estado-si">${num(p.altitud, 1)}° · ${esc(p.direccion)}</span>
+        </div>
+        <span class="evento-meta">Magnitud ${p.magnitud === null ? '—' : num(p.magnitud, 1)} · cuanto más bajo el número, más brillante</span>
+      </div>`;
+    if (data.visibles_ahora && data.planetas?.length) {
+      $(id).innerHTML = data.planetas.map(fila).join('');
     } else if (data.proxima_ventana) {
-      const v = data.proxima_ventana;
-      html = `<div class="card-value">Próxima ventana: <strong>${v.hora_local}</strong></div>
-              <div class="card-sub">En ${v.en_horas}h · ${v.planetas.map(p => p.planeta).join(', ')}</div>`;
+      const v = data.proxima_ventana, cielo = data.cielo || {};
+      const motivo = cielo.condicion === 'noche'
+        ? 'Ahora no hay planetas sobre el horizonte.'
+        : `Ahora es de ${cielo.condicion} en ${CIUDAD} (Sol a ${num(cielo.altura_sol, 1)}°): los planetas no se pueden ver.`;
+      $(id).innerHTML = `
+        <div class="evento">
+          <p class="evento-nota">${motivo}</p>
+          <span class="evento-titulo">Próxima ventana: ${esc(v.hora_local)} <span class="texto-sub">(en ${horasTexto(v.en_minutos)})</span></span>
+        </div>` + v.planetas.map(fila).join('');
     } else {
-      html = '<div class="card-sub">No hay planetas visibles ahora mismo.</div>';
+      $(id).innerHTML = '<p class="texto-sub">No hay planetas visibles en las próximas horas. El cielo sigue su curso.</p>';
     }
-    document.getElementById('planetas-data').innerHTML = html +
-      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
-  } catch (e) {
-    document.getElementById('planetas-data').textContent = 'Error al cargar';
-    console.error(e);
-  }
+  } catch { mostrarError(id, cargarPlanetas); }
 }
 
-
 async function cargarEclipses() {
+  const id = 'eclipses-data';
+  $(id).innerHTML = cargandoHTML(4);
   try {
-    const res  = await fetch(`${API}/api/eclipses`);
-    const data = await res.json();
-    const html = data.eclipses.map(e => {
+    const { eclipses } = await getJSON('/api/eclipses');
+    if (!eclipses.length) {
+      $(id).innerHTML = '<p class="texto-sub">No hay eclipses en los próximos meses.</p>';
+      return;
+    }
+    $(id).innerHTML = eclipses.map(e => {
       const cr  = e.cuenta_regresiva;
-      const vis = e.visible_quito ? '✓ visible desde Quito' : 'no visible desde Quito';
       const ico = e.tipo === 'Solar' ? '☀️' : '🌑';
+      const horario = e.tipo === 'Solar' && e.local
+        ? `<div class="evento-datos">
+             <span>Empieza <strong>${esc(e.local.inicio)}</strong></span>
+             <span>Máximo <strong>${esc(e.local.maximo)}</strong></span>
+             <span>Termina <strong>${esc(e.local.fin)}</strong></span>
+             <span>Sol cubierto <strong>${num(e.local.magnitud * 100)}%</strong> (diámetro)</span>
+           </div>`
+        : '';
       return `
-        <div class="conj-item">
-          <div class="card-value">${ico} Eclipse ${e.tipo} ${e.subtipo}</div>
-          <div class="card-value" style="font-size:18px;font-weight:700;color:#7dd3fc;margin:4px 0;">
-            ${cr.dias}d ${cr.horas}h ${cr.mins}m
+        <article class="evento ${e.visible_local ? '' : 'evento-atenuado'}">
+          <div class="evento-fila">
+            <h2 class="evento-titulo"><span aria-hidden="true">${ico}</span> Eclipse ${e.tipo.toLowerCase()} ${e.subtipo.toLowerCase()}</h2>
+            <span class="estado ${e.visible_local ? 'estado-si' : 'estado-no'}">${e.visible_local ? '✓ Visible desde ' + CIUDAD : 'No visible desde ' + CIUDAD}</span>
           </div>
-          <div class="card-sub">${e.fecha_local} · ${vis}</div>
-        </div>`;
+          <span class="cuenta-grande">${cr.dias}d ${cr.horas}h ${cr.mins}m</span>
+          <span class="evento-meta">${esc(e.fecha_local)} (hora de ${CIUDAD})</span>
+          ${horario}
+          <p class="evento-nota">${esc(e.descripcion)}</p>
+        </article>`;
     }).join('');
-    document.getElementById('eclipses-data').innerHTML = html +
-      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
-  } catch(e) {
-    document.getElementById('eclipses-data').textContent = 'Error al cargar';
-  }
+  } catch { mostrarError(id, cargarEclipses); }
 }
 
 async function cargarConjunciones() {
+  const id = 'conjunciones-data';
+  $(id).innerHTML = cargandoHTML();
   try {
-    const res  = await fetch(`${API}/api/conjunciones`);
-    const data = await res.json();
-    let html = !data.conjunciones.length
-      ? '<div class="card-sub">Ninguna conjunción notable en los próximos 90 días.</div>'
-      : data.conjunciones.map(c => `
-          <div class="conj-item">
-            <div class="card-value">✨ ${c.planeta1} + ${c.planeta2}</div>
-            <div class="card-sub">Separación: ${c.separacion}° · ${c.fecha_local} · ${c.cuenta_regresiva.texto}</div>
-          </div>`).join('');
-    document.getElementById('conjunciones-data').innerHTML = html + `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
-  } catch { document.getElementById('conjunciones-data').textContent = 'Error al cargar'; }
+    const { conjunciones } = await getJSON('/api/conjunciones');
+    $(id).innerHTML = !conjunciones.length
+      ? '<p class="texto-sub">Ninguna conjunción notable en los próximos 4 meses. El cielo sigue su curso.</p>'
+      : conjunciones.map(c => `
+          <article class="evento ${c.observable ? '' : 'evento-atenuado'}">
+            <div class="evento-fila">
+              <h2 class="evento-titulo">${esc(c.planeta1)} y ${esc(c.planeta2)}</h2>
+              <span class="estado ${c.observable ? 'estado-si' : 'estado-info'}">${c.observable ? 'Observable' : 'Muy cerca del Sol'}</span>
+            </div>
+            <div class="evento-datos">
+              <span>Separación <strong>${num(c.separacion, 2)}°</strong></span>
+              <span>Fecha <strong>${esc(c.fecha_local)}</strong></span>
+              <span><strong>${esc(c.cuenta_regresiva.texto)}</strong></span>
+            </div>
+            <p class="evento-nota">${esc(c.nota)}</p>
+          </article>`).join('');
+  } catch { mostrarError(id, cargarConjunciones); }
+}
+
+async function cargarOposiciones() {
+  const id = 'oposiciones-data';
+  $(id).innerHTML = cargandoHTML();
+  try {
+    const { oposiciones } = await getJSON('/api/oposiciones');
+    $(id).innerHTML = !oposiciones.length
+      ? '<p class="texto-sub">No hay oposiciones próximas.</p>'
+      : oposiciones.map(o => `
+          <article class="evento">
+            <div class="evento-fila">
+              <h2 class="evento-titulo">${esc(o.planeta)}</h2>
+              <span class="estado ${o.simple_vista ? 'estado-si' : 'estado-no'}">${esc(o.cuenta_regresiva.texto)}</span>
+            </div>
+            <div class="evento-datos">
+              <span>Fecha <strong>${esc(o.fecha_local)}</strong></span>
+              <span>Distancia <strong>${num(o.distancia_ua, 2)} UA</strong></span>
+              <span>Magnitud <strong>${num(o.magnitud, 1)}</strong></span>
+            </div>
+            <p class="evento-nota">${esc(o.descripcion)}</p>
+          </article>`).join('');
+  } catch { mostrarError(id, cargarOposiciones); }
+}
+
+async function cargarCometas() {
+  const id = 'cometas-data';
+  $(id).innerHTML = cargandoHTML();
+  try {
+    const { cometas } = await getJSON('/api/cometas');
+    if (!cometas.length) {
+      $(id).innerHTML = '<p class="texto-sub">No hay cometas destacados en este momento.</p>';
+      return;
+    }
+    $(id).innerHTML = `<p class="evento-meta">Datos verificados al ${esc(cometas[0].actualizado)}</p>` + cometas.map(c => {
+      const vis = c.visible_simple_vista ? 'simple vista' : (c.visible_binoculares ? 'binoculares' : 'telescopio');
+      const mag = c.magnitud_pico === null ? 'sin dato fiable' : `${num(c.magnitud_pico, 1)} (${vis})`;
+      return `
+        <article class="evento">
+          <div class="evento-fila">
+            <h2 class="evento-titulo">${esc(c.nombre)}</h2>
+            <span class="estado estado-no">${esc(c.estado)}</span>
+          </div>
+          <div class="evento-datos">
+            <span>Perihelio <strong>${esc(c.fecha_perihelio)}</strong></span>
+            <span><strong>${esc(c.tiempo)}</strong></span>
+            <span>Magnitud máx. <strong>${mag}</strong></span>
+          </div>
+          <p class="evento-nota">${esc(c.descripcion)}</p>
+          <a href="${esc(c.fuente)}" target="_blank" rel="noopener" class="enlace">Fuente ↗</a>
+        </article>`;
+    }).join('');
+  } catch { mostrarError(id, cargarCometas); }
 }
 
 async function cargarLunas() {
+  const id = 'lunas-lista';
+  $(id).innerHTML = cargandoHTML(5);
   try {
-    const res  = await fetch(`${API}/api/lunas`);
-    const data = await res.json();
-    document.getElementById('lunas-lista').innerHTML =
-      data.lunas.map(l => `
-        <button class="luna-btn ripple" onclick="verLuna('${l.id}', this)">
-          <img id="img-${l.id}" src="" alt="${l.nombre}"
-            style="width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;background:rgba(125,211,252,0.1)">
-          <div class="luna-btn-info">
-            <div class="luna-btn-nombre">${l.nombre}</div>
-            <div class="luna-btn-planeta">${l.planeta}</div>
-          </div>
-        </button>`).join('') +
-      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:8px">← Volver</button>`;
-
-    // Cargar imágenes de NASA en paralelo
-    data.lunas.forEach(async l => {
-      try {
-        const r   = await fetch(`${API}/api/lunas/${l.id}/imagen`);
-        const img = await r.json();
-        const el  = document.getElementById(`img-${l.id}`);
-        if (el && img.imagen) el.src = img.imagen;
-      } catch {}
-    });
-
-  } catch { document.getElementById('lunas-lista').textContent = 'Error al cargar'; }
+    const { lunas } = await getJSON('/api/lunas');
+    $(id).innerHTML = lunas.map(l => `
+      <button class="luna-btn" type="button" data-luna="${esc(l.id)}" aria-pressed="false" aria-controls="luna-detalle">
+        <img src="${esc(l.imagen)}" alt="" loading="lazy">
+        <span>
+          <span class="luna-btn-nombre">${esc(l.nombre)}</span>
+          <span class="luna-btn-planeta">${esc(l.planeta)}</span>
+        </span>
+      </button>`).join('');
+    $(id).querySelectorAll('.luna-btn').forEach(b => b.addEventListener('click', () => verLuna(b)));
+    conRespaldo($(id));
+  } catch { mostrarError(id, cargarLunas); }
 }
 
-async function verLuna(id, btn) {
-  document.querySelectorAll('.luna-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  const detalle = document.getElementById('luna-detalle');
-  detalle.innerHTML = '<div class="card-sub" style="text-align:center;padding:20px">Cargando...</div>';
+async function verLuna(boton) {
+  document.querySelectorAll('.luna-btn').forEach(b => b.setAttribute('aria-pressed', String(b === boton)));
+  const detalle = $('luna-detalle');
+  detalle.innerHTML = cargandoHTML(4);
   try {
-    const [resLuna, resImg] = await Promise.all([
-      fetch(`${API}/api/lunas/${id}`),
-      fetch(`${API}/api/lunas/${id}/imagen`)
-    ]);
-    const l      = await resLuna.json();
-    const imgData = await resImg.json();
-    const imgUrl  = imgData.imagen || '';
-    const d       = l.datos;
-
+    const l = await getJSON(`/api/lunas/${encodeURIComponent(boton.dataset.luna)}`);
+    const d = l.datos;
+    const filas = [
+      ['Diámetro', `${num(d.diametro_km)} km`], ['Distancia a su planeta', `${num(d.distancia_km)} km`],
+      ['Período orbital', `${num(d.periodo_orbital_dias, 2)} días`], ['Temp. máxima', `${d.temperatura_max} °C`],
+      ['Temp. mínima', `${d.temperatura_min} °C`], ['Gravedad', d.gravedad], ['Atmósfera', d.atmosfera],
+    ];
     detalle.innerHTML = `
-      <div class="luna-top-row">
-        <div class="luna-img-cuadrado">
-          <img src="${imgUrl}" alt="${l.nombre}">
-        </div>
-        <div class="luna-datos-cuadrado">
-          <div class="luna-seccion-titulo" style="margin-bottom:10px">📊 DATOS</div>
-          <div class="luna-dato"><span>Diámetro</span><span>${d.diametro_km.toLocaleString()} km</span></div>
-          <div class="luna-dato"><span>Distancia</span><span>${d.distancia_km.toLocaleString()} km</span></div>
-          <div class="luna-dato"><span>Período</span><span>${d.periodo_orbital_dias} días</span></div>
-          <div class="luna-dato"><span>Temp. máx</span><span>${d.temperatura_max}°C</span></div>
-          <div class="luna-dato"><span>Temp. mín</span><span>${d.temperatura_min}°C</span></div>
-          <div class="luna-dato"><span>Gravedad</span><span>${d.gravedad}</span></div>
-          <div class="luna-dato"><span>Atmósfera</span><span>${d.atmosfera}</span></div>
+      <div class="luna-cabecera">
+        <img src="${esc(l.imagen)}" alt="Fotografía de ${esc(l.nombre)}, luna de ${esc(l.planeta)}">
+        <div>
+          <h2 class="luna-titulo">${esc(l.nombre)} <span class="texto-sub">· ${esc(l.planeta)}</span></h2>
+          <table class="tabla-datos"><tbody>
+            ${filas.map(([k, v]) => `<tr><th scope="row">${k}</th><td>${esc(v)}</td></tr>`).join('')}
+          </tbody></table>
         </div>
       </div>
-
-      <div class="luna-seccion">
-        <div class="luna-seccion-titulo">📖 Historia</div>
-        <div class="luna-seccion-texto">${l.historia}</div>
-      </div>
-      <div class="luna-seccion">
-        <div class="luna-seccion-titulo">✨ Curiosidades</div>
-        ${l.curiosidades.map(c => `<div class="curiosidad">${c}</div>`).join('')}
-      </div>
-      <div class="luna-seccion">
-        <div class="luna-seccion-titulo">🚀 Exploración</div>
-        <div class="luna-seccion-texto">${l.exploracion}</div>
-      </div>
-      <button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:8px">← Volver al menú</button>
-    `;
-  } catch(e) {
-    detalle.innerHTML = '<div class="card-sub">Error al cargar</div>';
-    console.error(e);
+      <div class="sub-panel"><h3 class="sub-panel-titulo">📖 Historia</h3><p class="texto-cuerpo">${esc(l.historia)}</p></div>
+      <div class="sub-panel"><h3 class="sub-panel-titulo">✨ Curiosidades</h3>${l.curiosidades.map(c => `<p class="curiosidad">${esc(c)}</p>`).join('')}</div>
+      <div class="sub-panel"><h3 class="sub-panel-titulo">🚀 Exploración</h3><p class="texto-cuerpo">${esc(l.exploracion)}</p></div>`;
+    conRespaldo(detalle);
+  } catch {
+    mostrarError('luna-detalle', () => verLuna(boton));
   }
 }
 
-
-async function cargarOposiciones() {
-  try {
-    const res  = await fetch(`${API}/api/oposiciones`);
-    const data = await res.json();
-    const html = data.oposiciones.map(o => `
-      <div class="conj-item">
-        <div class="opos-row">
-          <div>
-            <div class="card-value">🔴 ${o.planeta}</div>
-            <div class="card-sub">${o.fecha_local}</div>
-          </div>
-          <div class="opos-badge">${o.cuenta_regresiva.texto}</div>
-        </div>
-        <div class="opos-datos">
-          <span>Distancia: <strong>${o.distancia_ua} UA</strong></span>
-          <span>Elongación: <strong>${o.elongacion}°</strong></span>
-        </div>
-        <div class="card-sub" style="margin-top:6px;font-family:'Inter',sans-serif;font-style:italic">
-          ${o.descripcion}
-        </div>
-      </div>
-    `).join('');
-    document.getElementById('oposiciones-data').innerHTML = html +
-      `<button class="btn-volver ripple" onclick="volverMenu()" style="margin-top:16px">← Volver</button>`;
-  } catch(e) {
-    document.getElementById('oposiciones-data').textContent = 'Error al cargar';
-  }
-}
+$('form-telescopio').addEventListener('submit', e => {
+  e.preventDefault();
+  enviarConBoton(e.target, calcularTelescopio);
+});
 
 async function calcularTelescopio() {
-  const apertura  = document.getElementById('tel-apertura').value;
-  const focal     = document.getElementById('tel-focal').value;
-  const ocular    = document.getElementById('tel-ocular').value;
-  const afov      = document.getElementById('tel-afov').value || 52;
-
-  if (!apertura || !focal || !ocular) {
-    alert('Ingresa apertura, focal del telescopio y focal del ocular');
-    return;
+  const campos = ['tel-apertura', 'tel-focal', 'tel-ocular'];
+  campos.forEach(c => $(c).removeAttribute('aria-invalid'));
+  const vacios = campos.filter(c => !$(c).value);
+  if (vacios.length) {
+    vacios.forEach(c => $(c).setAttribute('aria-invalid', 'true'));
+    $(vacios[0]).focus();
+    return mensaje('tel-error', 'Ingresa la apertura, la focal del telescopio y la focal del ocular.');
   }
-
+  mensaje('tel-error', '');
   try {
-    const res  = await fetch(`${API}/api/telescopio`, {
+    const res = await fetch(`${API}/api/telescopio`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        apertura_mm:         parseFloat(apertura),
-        focal_telescopio_mm: parseFloat(focal),
-        focal_ocular_mm:     parseFloat(ocular),
-        afov:                parseFloat(afov)
-      })
+        apertura_mm:         parseFloat($('tel-apertura').value),
+        focal_telescopio_mm: parseFloat($('tel-focal').value),
+        focal_ocular_mm:     parseFloat($('tel-ocular').value),
+        afov:                parseFloat($('tel-afov').value || 52),
+      }),
     });
     const data = await res.json();
-    const r    = data.resultados;
-
-    document.getElementById('tel-mag').textContent    = r.magnificacion + 'x';
-    document.getElementById('tel-campo').textContent  = r.campo_visual + '°';
-    document.getElementById('tel-pupila').textContent = r.pupila_salida + 'mm';
-    document.getElementById('tel-limite').textContent = r.limite_magnitud;
-    document.getElementById('tel-min').textContent    = r.mag_minima_util + 'x';
-    document.getElementById('tel-max').textContent    = r.mag_maxima_util + 'x';
-
-    document.getElementById('tel-objetos').textContent =
-      data.objetos_recomendados.join(' · ');
-
-    const advBox = document.getElementById('tel-advertencias-box');
-    if (data.advertencias.length > 0) {
-      document.getElementById('tel-advertencias').innerHTML =
-        data.advertencias.map(a => `<div class="curiosidad" style="border-color:rgba(251,113,133,0.4)">${a}</div>`).join('');
-      advBox.classList.remove('hidden');
-    } else {
-      advBox.classList.add('hidden');
-    }
-
-    document.getElementById('telescopio-resultado').classList.remove('hidden');
-  } catch(e) {
-    console.error(e);
-    alert('Error al calcular');
+    if (!res.ok) return mensaje('tel-error', data.error || 'No se pudo calcular');
+    const r = data.resultados;
+    $('tel-mag').textContent    = `${num(r.magnificacion, 1)}x`;
+    $('tel-campo').textContent  = `${num(r.campo_visual, 2)}°`;
+    $('tel-pupila').textContent = `${num(r.pupila_salida, 1)} mm`;
+    $('tel-limite').textContent = num(r.limite_magnitud, 1);
+    $('tel-min').textContent    = `${r.mag_minima_util}x`;
+    $('tel-max').textContent    = `${r.mag_maxima_util}x`;
+    $('tel-objetos').textContent = data.objetos_recomendados.join(' · ');
+    $('tel-advertencias').innerHTML = data.advertencias.map(a => `<p class="curiosidad">${esc(a)}</p>`).join('');
+    $('tel-advertencias-box').hidden = !data.advertencias.length;
+    $('telescopio-resultado').hidden = false;
+  } catch {
+    mensaje('tel-error', 'No pudimos conectar con el servidor. Inténtalo de nuevo.');
   }
 }
 
+function cargarImagenTelescopio() {
+  imagenNasa('telescope night sky stars observatory', 'telescopio-bg-img');
+}
 
-// ── FONDO ESPACIAL ──
+// ═════════════ FONDO ESPACIAL (decorativo) ═════════════
 const ICONOS_ESPACIO = [
-  // Estrella simple
-  `<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5z"/></svg>`,
-  // Planeta con anillo
-  `<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="11" ry="3"/></svg>`,
-  // Cometa
-  `<svg viewBox="0 0 24 24" width="26" height="26"><circle cx="17" cy="7" r="3"/><path d="M14 10 L4 20 M12 8 L2 18 M16 12 L6 22"/></svg>`,
-  // Luna creciente
-  `<svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 4a8 8 0 100 16 8 8 0 01-8-8 8 8 0 018-8z"/></svg>`,
-  // Cohete
-  `<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 2c2 2 3 5 3 9s-1 7-3 9c-2-2-3-5-3-9s1-7 3-9z"/><path d="M9 14l-3 3v3l3-1M15 14l3 3v3l-3-1"/></svg>`,
-  // Cruz pequeña (estrella diminuta)
-  `<svg viewBox="0 0 24 24" width="10" height="10"><path d="M12 4v16M4 12h16"/></svg>`,
-  // Sol
-  `<svg viewBox="0 0 24 24" width="24" height="24"><circle cx="12" cy="12" r="5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/></svg>`,
-  // Satélite
-  `<svg viewBox="0 0 24 24" width="24" height="24"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 11H4M15 11h5M9 13H4M15 13h5"/><path d="M5 5l3 3M19 5l-3 3"/></svg>`,
+  '<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2l1.5 6.5L20 10l-6.5 1.5L12 18l-1.5-6.5L4 10l6.5-1.5z"/></svg>',
+  '<svg viewBox="0 0 24 24" width="28" height="28"><circle cx="12" cy="12" r="5"/><ellipse cx="12" cy="12" rx="11" ry="3"/></svg>',
+  '<svg viewBox="0 0 24 24" width="26" height="26"><circle cx="17" cy="7" r="3"/><path d="M14 10 L4 20 M12 8 L2 18 M16 12 L6 22"/></svg>',
+  '<svg viewBox="0 0 24 24" width="18" height="18"><path d="M15 4a8 8 0 100 16 8 8 0 01-8-8 8 8 0 018-8z"/></svg>',
+  '<svg viewBox="0 0 24 24" width="10" height="10"><path d="M12 4v16M4 12h16"/></svg>',
+  '<svg viewBox="0 0 24 24" width="24" height="24"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 11H4M15 11h5M9 13H4M15 13h5"/><path d="M5 5l3 3M19 5l-3 3"/></svg>',
 ];
 
 function generarFondoEspacial() {
-  const bg = document.getElementById('space-bg');
-  if (!bg) return;
-  const cantidad = 22;
-  let html = '';
-  for (let i = 0; i < cantidad; i++) {
+  $('space-bg').innerHTML = Array.from({ length: 18 }, () => {
     const icono = ICONOS_ESPACIO[Math.floor(Math.random() * ICONOS_ESPACIO.length)];
-    const top   = Math.random() * 100;
-    const left  = Math.random() * 100;
-    const rot   = Math.random() * 360;
-    html += `<div style="position:absolute;top:${top}%;left:${left}%;transform:rotate(${rot}deg)">${icono}</div>`;
-  }
-  bg.innerHTML = html;
+    return `<div style="position:absolute;top:${Math.random() * 100}%;left:${Math.random() * 100}%;transform:rotate(${Math.random() * 360}deg)">${icono}</div>`;
+  }).join('');
 }
 
+// ═════════════ ARRANQUE ═════════════
 generarFondoEspacial();
-
-
-async function cargarImagenesCards() {
-  for (const [cardId, query] of Object.entries(QUERIES_NASA_CARDS)) {
-    try {
-      const res  = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`);
-      const data = await res.json();
-      const items = data.collection?.items || [];
-      if (items.length > 0) {
-        // Elegir una imagen aleatoria entre los primeros 10 resultados
-        const max   = Math.min(items.length, 10);
-        const item  = items[Math.floor(Math.random() * max)];
-        const link  = item.links?.find(l => l.rel === 'preview');
-        if (link) {
-          const card = document.getElementById(cardId);
-          if (card) {
-            const bg = card.querySelector('.grid-card-bg');
-            bg.style.backgroundImage = `url('${link.href}')`;
-          }
-        }
-      }
-    } catch(e) { console.error('Error imagen', cardId, e); }
-  }
-}
-
-
-async function cargarImagenTelescopio() {
-  try {
-    const queries = ['telescope night sky stars observatory', 'astronomer telescope stargazing night'];
-    const query   = queries[Math.floor(Math.random() * queries.length)];
-    const res     = await fetch(`https://images-api.nasa.gov/search?q=${encodeURIComponent(query)}&media_type=image`);
-    const data    = await res.json();
-    const items   = data.collection?.items || [];
-    if (items.length > 0) {
-      const item = items[Math.floor(Math.random() * Math.min(items.length, 10))];
-      const link = item.links?.find(l => l.rel === 'preview');
-      if (link) document.getElementById('telescopio-bg-img').style.backgroundImage = `url('${link.href}')`;
-    }
-  } catch(e) { console.error(e); }
-}
-
-// ── INIT ──
-window.onload = () => {
-  if (getToken()) mostrarApp();
-};
+actualizarEstadoSesion();
+mostrarVista(location.pathname, { enfocar: false });
+cargarInicio();

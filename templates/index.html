@@ -3,402 +3,398 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AstroAlert</title>
+  <title>AstroAlert — Eventos astronómicos visibles desde Quito</title>
+  <meta name="description" content="Eclipses, planetas visibles, conjunciones, oposiciones y la ISS en tiempo real, calculados para Quito, Ecuador.">
+  <meta name="theme-color" content="#0B0718">
+  <meta property="og:title" content="AstroAlert">
+  <meta property="og:description" content="Descubre qué puedes ver hoy en el cielo de Quito: eclipses, planetas, conjunciones y la ISS en tiempo real.">
+  <meta property="og:type" content="website">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpolygon points='20,3 36,12 36,28 20,37 4,28 4,12' fill='%230B0718' stroke='%23BA55D3' stroke-width='3' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<div class="space-bg" id="space-bg"></div>
-  <!-- LOGIN -->
-  <div id="login-panel" class="login-screen">
-    <div class="login-center">
-      <div class="logo-container">
-        <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
-          fill="none" stroke="#7dd3fc" stroke-width="6"
-          stroke-linejoin="round"/>
-        </svg>
-        <div class="login-title">ASTROALERT</div>
-      </div>
+<a class="skip-link" href="#contenido">Saltar al contenido</a>
+<div class="space-bg" id="space-bg" aria-hidden="true"></div>
 
-      <div class="login-form">
-        <div class="input-group">
-          <label>Ingresar correo electrónico</label>
-          <input type="email" id="email" placeholder="">
-        </div>
-        <div class="input-group">
-          <label>Contraseña</label>
-          <input type="password" id="password" placeholder="">
-        </div>
-        <button class="btn-primary ripple" onclick="login()">Iniciar Sesión</button>
-        <p id="auth-error" class="error"></p>
-        <a class="link-crear" onclick="irARegistro()">Crear Cuenta</a>
-      </div>
-
-    </div>
-  </div>
-
-<!-- REGISTRO -->
-<div id="registro-panel" class="login-screen hidden">
-  <div class="login-center">
-
-    <div class="logo-container">
-      <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-        <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
-        fill="none" stroke="#7dd3fc" stroke-width="6"
-        stroke-linejoin="round"/>
-      </svg>
-      <div class="login-title">ASTROALERT</div>
-    </div>
-
-    <div class="login-form">
-      <button class="btn-back" onclick="volverLogin()">← Volver</button>
-
-      <div class="input-group">
-        <label>Ingresar Correo Electrónico</label>
-        <input type="email" id="reg-email" placeholder="">
-      </div>
-      <div class="input-group">
-        <label>Contraseña</label>
-        <input type="password" id="reg-password" placeholder="">
-      </div>
-      <div class="input-group">
-        <label>Confirmar Contraseña</label>
-        <input type="password" id="reg-confirmar" placeholder="">
-      </div>
-      <div class="input-group">
-        <label>Ingresar Nombre de Usuario</label>
-        <input type="text" id="reg-username" placeholder="">
-      </div>
-      <div class="input-group">
-        <label>Fecha de Nacimiento</label>
-        <div class="fecha-row">
-          <input type="number" id="reg-dia"  placeholder="DD"   min="1" max="31">
-          <input type="number" id="reg-mes"  placeholder="MM"   min="1" max="12">
-          <input type="number" id="reg-anio" placeholder="AAAA" min="1900" max="2099">
-        </div>
-      </div>
-      <div class="input-group">
-        <label>Número de Teléfono</label>
-        <div class="telefono-row">
-          <select id="reg-codigo" class="select-codigo">
-            <option value="+593">🇪🇨 +593</option>
-            <option value="+1">🇺🇸 +1</option>
-            <option value="+52">🇲🇽 +52</option>
-            <option value="+57">🇨🇴 +57</option>
-            <option value="+51">🇵🇪 +51</option>
-            <option value="+56">🇨🇱 +56</option>
-            <option value="+54">🇦🇷 +54</option>
-            <option value="+55">🇧🇷 +55</option>
-            <option value="+34">🇪🇸 +34</option>
-          </select>
-          <input type="tel" id="reg-telefono" placeholder="0987654321">
-        </div>
-      </div>
-      <button class="btn-primary ripple" onclick="registrarse()">Crear Cuenta</button>
-      <p id="reg-error" class="error"></p>
-    </div>
-  </div>
-</div>
-
-
-<!-- TRANSICIÓN -->
-<div id="transicion-panel" class="login-screen hidden">
-  <div class="login-center" style="gap:24px;">
-    <svg class="hexagono" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="60,8 108,34 108,86 60,112 12,86 12,34"
-        fill="none" stroke="#7dd3fc" stroke-width="6" stroke-linejoin="round"/>
-    </svg>
-    <div class="login-title">ASTROALERT</div>
-    <div class="bienvenido-texto">Bienvenido, explorador espacial!</div>
-  </div>
-</div>
-
-<!-- APP PRINCIPAL -->
-<div id="main-panel" class="hidden">
-
-  <!-- TOPBAR -->
-  <header class="topbar-simple">
-  <button class="topbar-menu-btn" onclick="toggleSidebar()">
-    <svg viewBox="0 0 40 40" width="26" height="26" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="20,3 36,12 36,28 20,37 4,28 4,12"
-        fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linejoin="round"/>
+<!-- ═══════════════ BARRA SUPERIOR ═══════════════ -->
+<header class="topbar">
+  <button class="topbar-menu-btn" id="btn-menu" aria-label="Abrir menú" aria-controls="sidebar" aria-expanded="false">
+    <svg viewBox="0 0 40 40" width="26" height="26" aria-hidden="true">
+      <polygon points="20,3 36,12 36,28 20,37 4,28 4,12" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
     </svg>
   </button>
-  <span class="topbar-titulo-grande">ASTROALERT</span>
-  <div class="topbar-location-small">Quito, EC</div>
+  <a class="topbar-marca" href="/" data-link>ASTROALERT</a>
+  <div class="topbar-derecha">
+    <span class="topbar-ubicacion" title="Los cálculos se hacen para esta ubicación">📍 Quito, EC</span>
+    <button class="btn btn-secundario btn-sm" id="btn-cuenta" type="button">Iniciar sesión</button>
+  </div>
 </header>
 
+<!-- ═══════════════ MENÚ LATERAL ═══════════════ -->
+<div id="sidebar-overlay" class="sidebar-overlay"></div>
+<nav id="sidebar" class="sidebar" aria-label="Secciones">
+  <div class="sidebar-seccion">
+    <a class="sidebar-item" href="/" data-link><span aria-hidden="true">🏠</span> Inicio</a>
+  </div>
+  <div class="sidebar-seccion">
+    <div class="sidebar-titulo">Ahora mismo</div>
+    <a class="sidebar-item" href="/iss" data-link><span aria-hidden="true">🛰️</span> ISS en vivo</a>
+    <a class="sidebar-item" href="/planetas" data-link><span aria-hidden="true">🪐</span> Planetas visibles</a>
+  </div>
+  <div class="sidebar-seccion">
+    <div class="sidebar-titulo">Eventos</div>
+    <a class="sidebar-item" href="/eclipses" data-link><span aria-hidden="true">🌑</span> Eclipses</a>
+    <a class="sidebar-item" href="/conjunciones" data-link><span aria-hidden="true">✨</span> Conjunciones</a>
+    <a class="sidebar-item" href="/oposiciones" data-link><span aria-hidden="true">🔴</span> Oposiciones</a>
+    <a class="sidebar-item" href="/cometas" data-link><span aria-hidden="true">☄️</span> Cometas</a>
+  </div>
+  <div class="sidebar-seccion">
+    <div class="sidebar-titulo">Explorar</div>
+    <a class="sidebar-item" href="/lunas" data-link><span aria-hidden="true">🌙</span> Lunas del sistema solar</a>
+    <a class="sidebar-item" href="/telescopio" data-link><span aria-hidden="true">🔭</span> Calculadora de telescopio</a>
+  </div>
+  <div class="sidebar-seccion">
+    <div class="sidebar-titulo">En desarrollo</div>
+    <a class="sidebar-item sidebar-item-pronto" href="/proximamente" data-link><span aria-hidden="true">☁️</span> Condiciones de observación <span class="pill">Pronto</span></a>
+    <a class="sidebar-item sidebar-item-pronto" href="/proximamente" data-link><span aria-hidden="true">🗺️</span> Mapa del cielo <span class="pill">Pronto</span></a>
+  </div>
+  <div class="sidebar-seccion" id="sidebar-sesion" hidden>
+    <div class="sidebar-titulo">Mi cuenta</div>
+    <div class="sidebar-cuenta-email" id="cuenta-email"></div>
+    <label class="check-row sidebar-check" for="toggle-alertas">
+      <input type="checkbox" id="toggle-alertas">
+      <span>Recibir alertas por correo</span>
+    </label>
+    <button class="sidebar-item" type="button" id="btn-cerrar-sesion">← Cerrar sesión</button>
+  </div>
+</nav>
 
-  <!-- SIDEBAR -->
-  <div id="sidebar-overlay" class="sidebar-overlay" onclick="closeSidebar()"></div>
-  <nav id="sidebar" class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Eventos</div>
-      <button class="sidebar-item" onclick="irSeccion('eclipses')">🌑 Eclipses solares y lunares</button>
-      <button class="sidebar-item" onclick="irSeccion('conjunciones')">✨ Conjunciones planetarias</button>
-      <button class="sidebar-item" onclick="expandirSub('lunas-sub')">🌙 Lunas de Júpiter <span class="sidebar-arrow" id="arrow-lunas-sub">›</span></button>
-      <div class="sidebar-sub hidden" id="lunas-sub">
-        <button class="sidebar-subitem" onclick="irSeccion('lunas')">Lunas visibles con binoculares</button>
-        <button class="sidebar-subitem" onclick="irSeccion('lunas')">Posición en tiempo real</button>
-      </div>
-      <button class="sidebar-item" onclick="irSeccion('oposiciones')">🔴 Oposiciones de planetas</button>
-      <button class="sidebar-item" onclick="irSeccion('cometas')">☄️ Cometas con efemérides</button>
-    </div>
+<main id="contenido" tabindex="-1">
 
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Herramientas</div>
-      <button class="sidebar-item" onclick="expandirSub('herramientas-sub')">🔭 Herramientas <span class="sidebar-arrow" id="arrow-herramientas-sub">›</span></button>
-      <div class="sidebar-sub hidden" id="herramientas-sub">
-        <button class="sidebar-subitem" onclick="irSeccion('mapa')">Mapa del cielo</button>
-        <button class="sidebar-subitem" onclick="irSeccion('telescopio')">Calculadora de telescopio</button>
-        <button class="sidebar-subitem" onclick="irSeccion('diario')">Diario del astrónomo</button>
-        <button class="sidebar-subitem" onclick="irSeccion('condiciones')">Condiciones de observación</button>
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Comunidad</div>
-      <button class="sidebar-item" onclick="expandirSub('comunidad-sub')">👥 Comunidad <span class="sidebar-arrow" id="arrow-comunidad-sub">›</span></button>
-      <div class="sidebar-sub hidden" id="comunidad-sub">
-        <button class="sidebar-subitem" onclick="irSeccion('foros')">Foros por ciudad</button>
-        <button class="sidebar-subitem" onclick="irSeccion('fotos')">Compartir observaciones</button>
-        <button class="sidebar-subitem" onclick="irSeccion('grupos')">Grupos de observación</button>
-        <button class="sidebar-subitem" onclick="irSeccion('ranking')">Ranking de observadores</button>
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-section-title">Educación</div>
-      <button class="sidebar-item" onclick="expandirSub('educacion-sub')">📚 Educación <span class="sidebar-arrow" id="arrow-educacion-sub">›</span></button>
-      <div class="sidebar-sub hidden" id="educacion-sub">
-        <button class="sidebar-subitem" onclick="irSeccion('guias')">Guías para principiantes</button>
-        <button class="sidebar-subitem" onclick="irSeccion('constelaciones')">Identificador de constelaciones</button>
-        <button class="sidebar-subitem" onclick="irSeccion('quiz')">Quiz — ¿qué planeta es este?</button>
-      </div>
-    </div>
-
-    <div class="sidebar-section">
-      <button class="sidebar-item" onclick="cerrarSesion()">← Cerrar sesión</button>
-    </div>
-  </nav>
-
-  <!-- CONTENIDO PRINCIPAL -->
-<main class="main-content-v2">
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-bg" id="hero-bg"></div>
-    <div class="hero-overlay"></div>
-
-    <div class="hero-content">
-      <div class="hero-texto">
-        <h1 class="hero-titulo">
-          Descubre el <span class="grad-texto">universo</span>.<br>
-          En <span class="grad-texto">tiempo real</span>.
-        </h1>
-        <p class="hero-sub">
-          AstroAlert te avisa sobre eventos astronómicos visibles desde tu ubicación,
-          con datos precisos calculados en tiempo real.
-        </p>
-        <button class="btn-hero ripple" onclick="irSeccion('eclipses')">
-          Explorar eventos
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M5 12h14M13 5l7 7-7 7"/>
-          </svg>
-        </button>
-      </div>
-
-      <div class="hero-card-iss glass" onclick="irSeccion('iss')">
-        <div class="hero-card-header">
-          <span class="dot-verde"></span> ISS en vivo
+  <!-- ═══════════════ INICIO ═══════════════ -->
+  <div class="vista" id="vista-inicio">
+    <section class="hero" aria-labelledby="hero-titulo">
+      <div class="hero-bg" id="hero-bg" aria-hidden="true"></div>
+      <div class="hero-overlay" aria-hidden="true"></div>
+      <div class="hero-contenido">
+        <div>
+          <h1 class="hero-titulo" id="hero-titulo">
+            Descubre el <span class="grad-texto">universo</span>.<br>
+            En <span class="grad-texto">tiempo real</span>.
+          </h1>
+          <p class="hero-sub">
+            AstroAlert calcula qué puedes ver en el cielo de Quito: eclipses, planetas,
+            conjunciones y la Estación Espacial Internacional.
+          </p>
+          <a class="btn btn-hero" href="/eclipses" data-link>
+            Explorar eventos
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
         </div>
-        <div class="hero-card-sub">Ahora mismo sobre tu cielo</div>
-        <div class="hero-card-numeros">
-          <div>
-            <div class="hero-numero" id="hero-iss-alt">—</div>
-            <div class="hero-numero-label">Altura actual</div>
-          </div>
-          <div>
-            <div class="hero-numero" id="hero-iss-dir">—</div>
-            <div class="hero-numero-label">Distancia</div>
-          </div>
-        </div>
+
+        <a class="hero-iss glass" href="/iss" data-link aria-describedby="hero-iss-sub">
+          <span class="hero-iss-cabecera"><span class="punto-vivo" aria-hidden="true"></span> ISS en vivo</span>
+          <span class="hero-iss-sub" id="hero-iss-sub">Estación Espacial Internacional</span>
+          <span class="hero-iss-datos">
+            <span><span class="dato-grande" id="hero-iss-alt">—</span><span class="dato-etiqueta">Altitud</span></span>
+            <span><span class="dato-grande" id="hero-iss-dist">—</span><span class="dato-etiqueta">Distancia a Quito</span></span>
+          </span>
+        </a>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- EVENTOS DESTACADOS -->
-  <section class="seccion-destacados">
-    <div class="seccion-header">
-      <div class="seccion-titulo"> Próximos eventos destacados</div>
-      <a class="seccion-ver-todos" onclick="irSeccion('eclipses')">Ver todos →</a>
-    </div>
-
-    <div class="destacados-grid">
-      <div class="destacado-card glass" id="dest-eclipse" onclick="irSeccion('eclipses')">
-        <div class="destacado-img" id="dest-eclipse-img"></div>
-        <div class="destacado-badge badge-rojo">ECLIPSE</div>
-        <div class="destacado-titulo" id="dest-eclipse-titulo">Cargando...</div>
-        <div class="destacado-fecha" id="dest-eclipse-fecha">—</div>
-        <div class="destacado-cuenta" id="dest-eclipse-cuenta">—</div>
-        <div class="destacado-tag" id="dest-eclipse-tag">—</div>
+    <section class="bloque" aria-labelledby="titulo-destacados">
+      <div class="bloque-cabecera">
+        <h2 class="bloque-titulo" id="titulo-destacados">Próximos eventos destacados</h2>
+        <a class="enlace" href="/eclipses" data-link>Ver eclipses →</a>
       </div>
-
-      <div class="destacado-card glass" id="dest-conjuncion" onclick="irSeccion('conjunciones')">
-        <div class="destacado-img" id="dest-conjuncion-img"></div>
-        <div class="destacado-badge badge-azul">CONJUNCIÓN</div>
-        <div class="destacado-titulo" id="dest-conjuncion-titulo">Cargando...</div>
-        <div class="destacado-fecha" id="dest-conjuncion-fecha">—</div>
-        <div class="destacado-cuenta" id="dest-conjuncion-cuenta">—</div>
-        <div class="destacado-tag" id="dest-conjuncion-tag">—</div>
+      <div class="destacados-grid">
+        <a class="destacado glass" href="/eclipses" data-link id="dest-eclipse">
+          <span class="destacado-img" id="dest-eclipse-img" aria-hidden="true"></span>
+          <span class="badge badge-eclipse">Eclipse</span>
+          <span class="destacado-titulo skeleton" id="dest-eclipse-titulo">Cargando eclipse</span>
+          <span class="destacado-fecha" id="dest-eclipse-fecha"></span>
+          <span class="destacado-cuenta" id="dest-eclipse-cuenta"></span>
+          <span class="destacado-tag" id="dest-eclipse-tag"></span>
+        </a>
+        <a class="destacado glass" href="/conjunciones" data-link id="dest-conjuncion">
+          <span class="destacado-img" id="dest-conjuncion-img" aria-hidden="true"></span>
+          <span class="badge badge-conjuncion">Conjunción</span>
+          <span class="destacado-titulo skeleton" id="dest-conjuncion-titulo">Cargando conjunción</span>
+          <span class="destacado-fecha" id="dest-conjuncion-fecha"></span>
+          <span class="destacado-cuenta" id="dest-conjuncion-cuenta"></span>
+          <span class="destacado-tag" id="dest-conjuncion-tag"></span>
+        </a>
+        <a class="destacado glass" href="/oposiciones" data-link id="dest-oposicion">
+          <span class="destacado-img" id="dest-oposicion-img" aria-hidden="true"></span>
+          <span class="badge badge-oposicion">Oposición</span>
+          <span class="destacado-titulo skeleton" id="dest-oposicion-titulo">Cargando oposición</span>
+          <span class="destacado-fecha" id="dest-oposicion-fecha"></span>
+          <span class="destacado-cuenta" id="dest-oposicion-cuenta"></span>
+          <span class="destacado-tag" id="dest-oposicion-tag"></span>
+        </a>
+        <a class="destacado glass" href="/cometas" data-link id="dest-cometa">
+          <span class="destacado-img" id="dest-cometa-img" aria-hidden="true"></span>
+          <span class="badge badge-cometa">Cometa</span>
+          <span class="destacado-titulo skeleton" id="dest-cometa-titulo">Cargando cometa</span>
+          <span class="destacado-fecha" id="dest-cometa-fecha"></span>
+          <span class="destacado-cuenta" id="dest-cometa-cuenta"></span>
+          <span class="destacado-tag" id="dest-cometa-tag"></span>
+        </a>
       </div>
+    </section>
 
-      <div class="destacado-card glass" id="dest-oposicion" onclick="irSeccion('oposiciones')">
-        <div class="destacado-img" id="dest-oposicion-img"></div>
-        <div class="destacado-badge badge-naranja">OPOSICIÓN</div>
-        <div class="destacado-titulo" id="dest-oposicion-titulo">Cargando...</div>
-        <div class="destacado-fecha" id="dest-oposicion-fecha">—</div>
-        <div class="destacado-cuenta" id="dest-oposicion-cuenta">—</div>
-        <div class="destacado-tag" id="dest-oposicion-tag">—</div>
-      </div>
+    <section class="bloque segunda-fila" aria-label="Herramientas y cielo de hoy">
+      <a class="tarjeta-planetas glass" href="/planetas" data-link>
+        <h2 class="bloque-titulo">Planetas visibles</h2>
+        <span class="texto-sub" id="planetas-visibles-sub">Desde Quito</span>
+        <span class="planetas-grid" id="planetas-visibles-grid">
+          <span class="skeleton skeleton-circulo"></span><span class="skeleton skeleton-circulo"></span><span class="skeleton skeleton-circulo"></span>
+        </span>
+      </a>
 
-      <div class="destacado-card glass" id="dest-cometa" onclick="irSeccion('cometas')">
-        <div class="destacado-img" id="dest-cometa-img"></div>
-        <div class="destacado-badge badge-verde">COMETA</div>
-        <div class="destacado-titulo" id="dest-cometa-titulo">Cargando...</div>
-        <div class="destacado-fecha" id="dest-cometa-fecha">—</div>
-        <div class="destacado-cuenta" id="dest-cometa-cuenta">—</div>
-        <div class="destacado-tag" id="dest-cometa-tag">—</div>
-      </div>
-    </div>
-  </section>
+      <a class="tarjeta-imagen glass" href="/telescopio" data-link>
+        <span class="tarjeta-imagen-bg" id="herramienta-tel-img" aria-hidden="true"></span>
+        <span class="tarjeta-imagen-contenido">
+          <span class="tarjeta-imagen-titulo">Calculadora de telescopio</span>
+          <span class="texto-sub">Calcula aumentos, campo visual y qué puedes observar</span>
+          <span class="btn btn-secundario btn-sm">Abrir calculadora</span>
+        </span>
+      </a>
 
-  <!-- SEGUNDA FILA -->
-  <section class="seccion-segunda-fila">
-    <div class="card-planetas-visibles glass" onclick="irSeccion('planetas')">
-      <div class="seccion-titulo" style="margin-bottom:14px">Planetas visibles ahora</div>
-      <div class="planetas-visibles-grid" id="planetas-visibles-grid">
-        <div class="loading">Cargando...</div>
-      </div>
-    </div>
+      <a class="tarjeta-imagen glass" id="card-imagen-dia" href="https://apod.nasa.gov/apod/astropix.html" target="_blank" rel="noopener">
+        <span class="tarjeta-imagen-bg" id="imagen-dia-img" aria-hidden="true"></span>
+        <span class="tarjeta-imagen-contenido">
+          <span class="tarjeta-imagen-titulo">Imagen astronómica del día</span>
+          <span class="texto-sub" id="imagen-dia-titulo">NASA · APOD</span>
+          <span class="btn btn-secundario btn-sm">Ver en NASA ↗</span>
+        </span>
+      </a>
+    </section>
 
-    <div class="card-herramienta glass" onclick="irSeccion('telescopio')">
-      <div class="herramienta-img" id="herramienta-tel-img"></div>
-      <div class="herramienta-overlay">
-        <div class="herramienta-titulo">Herramienta del telescopio</div>
-        <div class="herramienta-sub">Calcula y optimiza tu observación</div>
-        <button class="btn-mini ripple">Abrir calculadora</button>
-      </div>
-    </div>
-
-    <div class="card-herramienta glass" id="card-imagen-dia" onclick="irSeccion('proximamente')">
-      <div class="herramienta-img" id="imagen-dia-img"></div>
-      <div class="herramienta-overlay">
-        <div class="herramienta-titulo">Imagen astronómica del día</div>
-        <div class="herramienta-sub" id="imagen-dia-titulo">Crédito: NASA</div>
-        <button class="btn-mini ripple">Ver más imágenes</button>
-      </div>
-    </div>
-  </section>
-
-  <div class="cita-final">
-    "La astronomía nos humilla y nos construye un carácter."<br>
-    <span>— Carl Sagan</span>
+    <blockquote class="cita-final">
+      “Se ha dicho que la astronomía es una experiencia que nos vuelve humildes y forja el carácter.”
+      <cite>— Carl Sagan, Un punto azul pálido</cite>
+    </blockquote>
   </div>
 
-  <!-- Las secciones individuales (iss, planetas, eclipses, etc.) se mantienen igual abajo -->
+  <!-- ═══════════════ SECCIONES ═══════════════ -->
+  <section class="vista seccion" id="vista-iss" hidden aria-labelledby="t-iss">
+    <header class="seccion-cabecera">
+      <h1 id="t-iss" tabindex="-1"><span aria-hidden="true">🛰️</span> ISS en vivo</h1>
+      <p>La Estación Espacial Internacional da una vuelta a la Tierra cada ~90 minutos. Así está ahora mismo.</p>
+    </header>
+    <div class="panel" id="iss-data" aria-live="polite"></div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-planetas" hidden aria-labelledby="t-planetas">
+    <header class="seccion-cabecera">
+      <h1 id="t-planetas" tabindex="-1"><span aria-hidden="true">🪐</span> Planetas visibles</h1>
+      <p>Solo cuentan los planetas sobre el horizonte cuando el cielo ya está oscuro (Sol a más de 6° bajo el horizonte).</p>
+    </header>
+    <div class="panel" id="planetas-data" aria-live="polite"></div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-eclipses" hidden aria-labelledby="t-eclipses">
+    <header class="seccion-cabecera">
+      <h1 id="t-eclipses" tabindex="-1"><span aria-hidden="true">🌑</span> Eclipses</h1>
+      <p>Calculados con efemérides de la NASA (JPL DE421). Para cada eclipse se indica si se ve desde Quito y cómo.</p>
+    </header>
+    <div class="panel" id="eclipses-data" aria-live="polite"></div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-conjunciones" hidden aria-labelledby="t-conjunciones">
+    <header class="seccion-cabecera">
+      <h1 id="t-conjunciones" tabindex="-1"><span aria-hidden="true">✨</span> Conjunciones planetarias</h1>
+      <p>Dos planetas que se ven a menos de 3° entre sí (unos seis diámetros de la Luna llena).</p>
+    </header>
+    <div class="panel" id="conjunciones-data" aria-live="polite"></div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-oposiciones" hidden aria-labelledby="t-oposiciones">
+    <header class="seccion-cabecera">
+      <h1 id="t-oposiciones" tabindex="-1"><span aria-hidden="true">🔴</span> Oposiciones</h1>
+      <p>El día en que un planeta queda opuesto al Sol: se ve toda la noche y en su máximo brillo.</p>
+    </header>
+    <div class="panel" id="oposiciones-data" aria-live="polite"></div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-cometas" hidden aria-labelledby="t-cometas">
+    <header class="seccion-cabecera">
+      <h1 id="t-cometas" tabindex="-1"><span aria-hidden="true">☄️</span> Cometas</h1>
+      <p>Cometas destacados recientes, con datos verificados y su fuente.</p>
+    </header>
+    <div class="panel" id="cometas-data" aria-live="polite"></div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-lunas" hidden aria-labelledby="t-lunas">
+    <header class="seccion-cabecera">
+      <h1 id="t-lunas" tabindex="-1"><span aria-hidden="true">🌙</span> Lunas del sistema solar</h1>
+      <p>Diez lunas fascinantes: elige una para ver sus datos, su historia y cómo se ha explorado.</p>
+    </header>
+    <div class="lunas-layout">
+      <div class="lunas-lista" id="lunas-lista"></div>
+      <div class="luna-detalle panel" id="luna-detalle" aria-live="polite">
+        <p class="texto-sub centrado">Selecciona una luna de la lista.</p>
+      </div>
+    </div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-telescopio" hidden aria-labelledby="t-telescopio">
+    <header class="seccion-cabecera">
+      <h1 id="t-telescopio" tabindex="-1"><span aria-hidden="true">🔭</span> Calculadora de telescopio</h1>
+      <p>Escribe los datos de tu telescopio y ocular para saber qué aumento logras y qué objetos te convienen.</p>
+    </header>
+    <div class="telescopio-layout">
+      <div>
+        <form class="panel formulario" id="form-telescopio" novalidate>
+          <div class="campo">
+            <label for="tel-apertura">Apertura del telescopio (mm)</label>
+            <input type="number" id="tel-apertura" inputmode="decimal" placeholder="Ej: 130" min="1" required>
+          </div>
+          <div class="campo">
+            <label for="tel-focal">Focal del telescopio (mm)</label>
+            <input type="number" id="tel-focal" inputmode="decimal" placeholder="Ej: 1000" min="1" required>
+          </div>
+          <div class="campo">
+            <label for="tel-ocular">Focal del ocular (mm)</label>
+            <input type="number" id="tel-ocular" inputmode="decimal" placeholder="Ej: 10" min="1" required>
+          </div>
+          <div class="campo">
+            <label for="tel-afov">Campo aparente del ocular (°)</label>
+            <input type="number" id="tel-afov" inputmode="decimal" placeholder="52 por defecto" min="10" max="120" aria-describedby="ayuda-afov">
+            <small id="ayuda-afov" class="ayuda">Viene en la caja del ocular. Si no lo sabes, deja 52°.</small>
+          </div>
+          <button class="btn btn-primario" type="submit">Calcular</button>
+          <p class="mensaje-error" id="tel-error" role="alert"></p>
+        </form>
+
+        <div id="telescopio-resultado" hidden aria-live="polite">
+          <div class="tel-grid">
+            <div class="tel-dato"><span class="tel-valor" id="tel-mag">—</span><span class="tel-etiqueta">Aumento</span></div>
+            <div class="tel-dato"><span class="tel-valor" id="tel-campo">—</span><span class="tel-etiqueta">Campo visual</span></div>
+            <div class="tel-dato"><span class="tel-valor" id="tel-pupila">—</span><span class="tel-etiqueta">Pupila de salida</span></div>
+            <div class="tel-dato"><span class="tel-valor" id="tel-limite">—</span><span class="tel-etiqueta">Magnitud límite</span></div>
+            <div class="tel-dato"><span class="tel-valor" id="tel-min">—</span><span class="tel-etiqueta">Aumento mín.</span></div>
+            <div class="tel-dato"><span class="tel-valor" id="tel-max">—</span><span class="tel-etiqueta">Aumento máx.</span></div>
+          </div>
+          <div class="sub-panel">
+            <h2 class="sub-panel-titulo">🎯 Objetos recomendados</h2>
+            <p id="tel-objetos" class="texto-cuerpo"></p>
+          </div>
+          <div class="sub-panel sub-panel-aviso" id="tel-advertencias-box" hidden>
+            <h2 class="sub-panel-titulo">⚠ Advertencias</h2>
+            <div id="tel-advertencias"></div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2 class="sub-panel-titulo">📖 ¿Qué significan estos números?</h2>
+          <dl class="glosario">
+            <dt>Aumento</dt><dd>Cuántas veces se amplía la imagen. Más alto no siempre es mejor: depende de tu telescopio.</dd>
+            <dt>Campo visual</dt><dd>Cuánto cielo ves por el ocular. Campos grandes son ideales para nebulosas y cúmulos.</dd>
+            <dt>Pupila de salida</dt><dd>El diámetro del haz de luz que llega a tu ojo. Entre 2 y 5 mm es lo más cómodo.</dd>
+            <dt>Magnitud límite</dt><dd>La estrella más débil que tu telescopio puede captar. Útil para saber si verás un cometa débil.</dd>
+            <dt>Aumento mínimo/máximo útil</dt><dd>El rango ideal para tu apertura. Salirte de él da imágenes borrosas u oscuras.</dd>
+          </dl>
+        </div>
+        <div class="telescopio-imagen" aria-hidden="true">
+          <span class="tarjeta-imagen-bg" id="telescopio-bg-img"></span>
+          <span class="telescopio-imagen-texto">Observando el universo, un grado a la vez</span>
+        </div>
+      </div>
+    </div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
+
+  <section class="vista seccion" id="vista-proximamente" hidden aria-labelledby="t-pronto">
+    <div class="panel centrado vacio">
+      <div class="vacio-icono" aria-hidden="true">🚀</div>
+      <h1 id="t-pronto" tabindex="-1">En desarrollo</h1>
+      <p class="texto-sub">Esta sección todavía se está construyendo. Mientras tanto, el cielo sigue su curso.</p>
+    </div>
+    <a class="btn btn-fantasma" href="/" data-link>← Volver al inicio</a>
+  </section>
 </main>
 
-<div id="sec-oposiciones" class="seccion hidden">
-  <div class="card">
-    <div class="card-label">🔴 OPOSICIONES PLANETARIAS</div>
-    <div id="oposiciones-data" class="loading">Cargando...</div>
-  </div>
+<footer class="pie">
+  <p>
+    Cálculos con <a href="https://rhodesmill.org/skyfield/" target="_blank" rel="noopener">Skyfield</a> y efemérides JPL DE421 ·
+    ISS: <a href="https://wheretheiss.at" target="_blank" rel="noopener">wheretheiss.at</a> ·
+    Imágenes: <a href="https://images.nasa.gov" target="_blank" rel="noopener">NASA</a> y Wikimedia Commons
+  </p>
+  <p>Hecho por Dereck Proaño · <a href="https://github.com/Ijloy/astroalert" target="_blank" rel="noopener">Código en GitHub</a></p>
+</footer>
+
+<!-- ═══════════════ CUENTA (opcional, solo para alertas) ═══════════════ -->
+<div class="auth-overlay" id="login-panel" role="dialog" aria-modal="true" aria-labelledby="login-titulo" hidden>
+  <form class="auth-caja" id="form-login" novalidate>
+    <button class="btn-cerrar" type="button" data-cerrar-auth aria-label="Cerrar">✕</button>
+    <svg class="hexagono" viewBox="0 0 120 120" aria-hidden="true">
+      <polygon points="60,8 108,34 108,86 60,112 12,86 12,34" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+    </svg>
+    <h2 class="auth-titulo" id="login-titulo">Iniciar sesión</h2>
+    <p class="texto-sub centrado">La cuenta es opcional: sirve para recibir alertas del cielo por correo.</p>
+    <div class="campo">
+      <label for="email">Correo electrónico</label>
+      <input type="email" id="email" autocomplete="email" required>
+    </div>
+    <div class="campo">
+      <label for="password">Contraseña</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+    </div>
+    <button class="btn btn-primario" type="submit">Iniciar sesión</button>
+    <p class="mensaje-error" id="auth-error" role="alert"></p>
+    <button class="btn-enlace" type="button" id="btn-ir-registro">¿No tienes cuenta? Crear una</button>
+  </form>
 </div>
 
-<div id="sec-telescopio" class="seccion hidden">
-  <div class="card-label" style="padding:0 20px;margin-bottom:12px">🔭 CALCULADORA DE TELESCOPIO</div>
-
-  <div class="telescopio-layout">
-
-    <!-- IZQUIERDA: FORMULARIO -->
-    <div class="telescopio-col-form">
-      <div class="card">
-        <div class="input-group">
-          <label>Apertura del telescopio (mm)</label>
-          <input type="number" id="tel-apertura" placeholder="Ej: 130" min="1">
-        </div>
-        <div class="input-group">
-          <label>Focal del telescopio (mm)</label>
-          <input type="number" id="tel-focal" placeholder="Ej: 1000" min="1">
-        </div>
-        <div class="input-group">
-          <label>Focal del ocular (mm)</label>
-          <input type="number" id="tel-ocular" placeholder="Ej: 10" min="1">
-        </div>
-        <div class="input-group">
-          <label>Campo aparente del ocular (°)</label>
-          <input type="number" id="tel-afov" placeholder="52 por defecto" min="1" max="120">
-        </div>
-        <button class="btn-primary ripple" onclick="calcularTelescopio()">Calcular</button>
-      </div>
-
-      <div id="telescopio-resultado" class="hidden" style="margin-top:12px">
-        <div class="tel-grid">
-          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-mag">—</div><div class="tel-dato-label">Magnificación</div></div>
-          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-campo">—</div><div class="tel-dato-label">Campo visual</div></div>
-          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-pupila">—</div><div class="tel-dato-label">Pupila salida</div></div>
-          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-limite">—</div><div class="tel-dato-label">Límite magnitud</div></div>
-          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-min">—</div><div class="tel-dato-label">Mag. mínima</div></div>
-          <div class="tel-dato-card"><div class="tel-dato-valor" id="tel-max">—</div><div class="tel-dato-label">Mag. máxima</div></div>
-        </div>
-        <div class="luna-seccion" style="margin-top:10px">
-          <div class="luna-seccion-titulo">🎯 Objetos recomendados</div>
-          <div id="tel-objetos" class="luna-seccion-texto"></div>
-        </div>
-        <div id="tel-advertencias-box" class="luna-seccion hidden" style="margin-top:8px;border-color:rgba(251,113,133,0.3)">
-          <div class="luna-seccion-titulo" style="color:#fb7185">⚠ Advertencias</div>
-          <div id="tel-advertencias" class="luna-seccion-texto" style="color:#fb7185"></div>
-        </div>
-      </div>
+<div class="auth-overlay" id="registro-panel" role="dialog" aria-modal="true" aria-labelledby="registro-titulo" hidden>
+  <form class="auth-caja" id="form-registro" novalidate>
+    <button class="btn-cerrar" type="button" data-cerrar-auth aria-label="Cerrar">✕</button>
+    <svg class="hexagono" viewBox="0 0 120 120" aria-hidden="true">
+      <polygon points="60,8 108,34 108,86 60,112 12,86 12,34" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
+    </svg>
+    <h2 class="auth-titulo" id="registro-titulo">Crear cuenta</h2>
+    <div class="campo">
+      <label for="reg-email">Correo electrónico</label>
+      <input type="email" id="reg-email" autocomplete="email" required>
     </div>
-
-    <!-- DERECHA: EXPLICACIÓN + IMAGEN -->
-    <div class="telescopio-col-info">
-      <div class="card">
-        <div class="luna-seccion-titulo" style="margin-bottom:10px">📖 ¿Qué significan estos números?</div>
-        <div class="tel-explica-item">
-          <strong>Magnificación</strong> — cuántas veces se amplía la imagen. Más alto no siempre es mejor: depende de tu telescopio.
-        </div>
-        <div class="tel-explica-item">
-          <strong>Campo visual</strong> — cuánto cielo ves por el ocular. Campos grandes son ideales para nebulosas y cúmulos.
-        </div>
-        <div class="tel-explica-item">
-          <strong>Pupila de salida</strong> — el diámetro de luz que llega a tu ojo. Entre 2-5mm es lo más cómodo.
-        </div>
-        <div class="tel-explica-item">
-          <strong>Límite de magnitud</strong> — la estrella más débil que tu telescopio puede captar. Útil para saber si verás un cometa débil.
-        </div>
-        <div class="tel-explica-item">
-          <strong>Mag. mínima/máxima útil</strong> — el rango ideal de aumento para tu apertura. Pasarte de este rango da imágenes borrosas u oscuras.
-        </div>
-      </div>
-
-      <div class="telescopio-imagen-card">
-        <div class="telescopio-imagen-bg" id="telescopio-bg-img"></div>
-        <div class="telescopio-imagen-overlay">
-          <div class="telescopio-imagen-texto">Observando el universo, un grado a la vez</div>
-        </div>
-      </div>
+    <div class="campo">
+      <label for="reg-password">Contraseña</label>
+      <input type="password" id="reg-password" autocomplete="new-password" minlength="8" required aria-describedby="ayuda-pass">
+      <small id="ayuda-pass" class="ayuda">Mínimo 8 caracteres.</small>
     </div>
-
-  </div>
-
-  <button class="btn-volver ripple" onclick="volverMenu()" style="margin:16px 20px">← Volver</button>
+    <div class="campo">
+      <label for="reg-confirmar">Confirmar contraseña</label>
+      <input type="password" id="reg-confirmar" autocomplete="new-password" required>
+    </div>
+    <div class="campo">
+      <label for="reg-username">Nombre de usuario (opcional)</label>
+      <input type="text" id="reg-username" autocomplete="username">
+    </div>
+    <label class="check-row" for="reg-alertas">
+      <input type="checkbox" id="reg-alertas">
+      <span>Quiero recibir por correo el resumen del cielo de cada noche y avisos de la ISS</span>
+    </label>
+    <button class="btn btn-primario" type="submit">Crear cuenta</button>
+    <p class="mensaje-error" id="reg-error" role="alert"></p>
+    <button class="btn-enlace" type="button" id="btn-ir-login">¿Ya tienes cuenta? Inicia sesión</button>
+  </form>
 </div>
 
-  <script src="/static/app.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>

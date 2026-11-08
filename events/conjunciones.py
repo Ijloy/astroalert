@@ -1,81 +1,92 @@
-from skyfield.api import Topos, load
+"""Conjunciones planetarias: dos planetas que se ven muy juntos en el cielo.
+
+Mejoras respecto a la versión anterior:
+* Se buscan TODOS los acercamientos (mínimos locales), no solo el mínimo de
+  cada par en 90 días, y se refinan a la hora exacta.
+* Se calcula la distancia al Sol: una conjunción a menos de 15° del Sol no se
+  puede observar, y ahora se avisa.
+* Los resultados se ordenan por fecha (antes, por separación).
+* Cálculo vectorizado + caché: de ~2,3 s por petición a una sola vez cada 6 h.
+"""
 from datetime import datetime, timezone, timedelta
-from math import degrees, acos, sin, cos, radians
-import os
+from itertools import combinations
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_loader  = load.__class__(BASE_DIR)
-TS       = _loader.timescale()
-EPH      = _loader('de421.bsp')
+import numpy as np
 
-PLANETAS = {
-    'Mercurio': EPH['mercury'],
-    'Venus':    EPH['venus'],
-    'Marte':    EPH['mars'],
-    'Jupiter':  EPH['jupiter barycenter'],
-    'Saturno':  EPH['saturn barycenter'],
-}
+from events.efemerides import TS, TIERRA, SOL, PLANETAS, CITY, a_local, cuenta_regresiva, cache_ttl
 
-def _separacion(cuerpo1, cuerpo2, t):
-    tierra = EPH['earth']
-    a1 = tierra.at(t).observe(cuerpo1).apparent()
-    a2 = tierra.at(t).observe(cuerpo2).apparent()
-    ra1, dec1, _ = a1.radec()
-    ra2, dec2, _ = a2.radec()
-    sep = acos(min(1.0, sin(dec1.radians) * sin(dec2.radians) +
-                cos(dec1.radians) * cos(dec2.radians) *
-                cos(ra1.radians - ra2.radians)))
-    return degrees(sep)
+DIAS_ADELANTE     = 120
+SEPARACION_MAX    = 3.0    # grados: más allá no se percibe como "conjunción"
+ELONGACION_MIN    = 15.0   # grados: más cerca del Sol, se pierde en su resplandor
 
-def proximas_conjunciones(dias=90):
-    ahora  = datetime.now(timezone.utc)
-    ahora_ts = ahora.timestamp()
-    nombres = list(PLANETAS.keys())
-    conjunciones = []
 
-    for i in range(len(nombres)):
-        for j in range(i + 1, len(nombres)):
-            n1, n2 = nombres[i], nombres[j]
-            c1, c2 = PLANETAS[n1], PLANETAS[n2]
+def _refinar(c1, c2, t_aprox):
+    """Busca el mínimo con resolución de 1 hora en ±1 día."""
+    tiempos = TS.tt_jd(t_aprox.tt + np.arange(-24, 25) / 24.0)
+    obs = TIERRA.at(tiempos)
+    sep = obs.observe(c1).apparent().separation_from(obs.observe(c2).apparent()).degrees
+    i = int(np.argmin(sep))
+    return tiempos[i], float(sep[i])
 
-            min_sep   = 999
-            min_fecha = None
 
-            for d in range(dias):
-                dt = ahora + timedelta(days=d)
-                t  = TS.from_datetime(dt)
-                sep = _separacion(c1, c2, t)
-                if sep < min_sep:
-                    min_sep   = sep
-                    min_fecha = dt
+@cache_ttl(6 * 3600)
+def _calcular():
+    ahora   = datetime.now(timezone.utc)
+    tiempos = TS.from_datetimes([ahora + timedelta(days=d) for d in range(DIAS_ADELANTE)])
+    obs     = TIERRA.at(tiempos)
+    pos     = {n: obs.observe(c).apparent() for n, c in PLANETAS.items()}
+    eventos = []
 
-            if min_sep < 5.0:
-                dt_local = min_fecha - timedelta(hours=5)
-                diff     = min_fecha.timestamp() - ahora_ts
-                dias_r   = int(diff // 86400)
-                horas_r  = int((diff % 86400) // 3600)
-                conjunciones.append({
-                    'planeta1':    n1,
-                    'planeta2':    n2,
-                    'separacion':  round(min_sep, 2),
-                    'fecha_local': dt_local.strftime('%d/%m/%Y'),
-                    'timestamp':   min_fecha.timestamp(),
-                    'cuenta_regresiva': {
-                        'dias':  dias_r,
-                        'horas': horas_r,
-                        'texto': f"En {dias_r}d {horas_r}h"
-                    }
+    for n1, n2 in combinations(PLANETAS, 2):
+        sep = pos[n1].separation_from(pos[n2]).degrees
+        # mínimos locales (incluye los extremos del intervalo)
+        for i in range(len(sep)):
+            izq = sep[i - 1] if i > 0 else np.inf
+            der = sep[i + 1] if i < len(sep) - 1 else np.inf
+            if sep[i] <= izq and sep[i] <= der and sep[i] < SEPARACION_MAX + 1:
+                t_min, s_min = _refinar(PLANETAS[n1], PLANETAS[n2], tiempos[i])
+                if s_min > SEPARACION_MAX:
+                    continue
+                o = TIERRA.at(t_min)
+                elong = o.observe(SOL).apparent().separation_from(o.observe(PLANETAS[n1]).apparent()).degrees
+                eventos.append({
+                    'planeta1':   n1,
+                    'planeta2':   n2,
+                    'separacion': round(s_min, 2),
+                    'fecha_utc':  t_min.utc_datetime(),
+                    'elongacion_sol': round(float(elong), 1),
+                    'observable': bool(elong >= ELONGACION_MIN),
                 })
 
-    conjunciones.sort(key=lambda x: x['separacion'])
-    return conjunciones
+    eventos.sort(key=lambda e: e['fecha_utc'])
+    return eventos
+
+
+def proximas_conjunciones():
+    ahora = datetime.now(timezone.utc)
+    resultado = []
+    for e in _calcular():
+        if e['fecha_utc'] < ahora - timedelta(hours=12):
+            continue
+        nota = (f"A {e['elongacion_sol']}° del Sol: buena oportunidad para observar."
+                if e['observable'] else
+                f"Solo a {e['elongacion_sol']}° del Sol: se pierde en su resplandor, difícil de observar.")
+        resultado.append({
+            'planeta1':    e['planeta1'],
+            'planeta2':    e['planeta2'],
+            'separacion':  e['separacion'],
+            'fecha_local': a_local(e['fecha_utc']).strftime('%d/%m/%Y'),
+            'hora_local':  a_local(e['fecha_utc']).strftime('%H:%M'),
+            'timestamp':   e['fecha_utc'].timestamp(),
+            'elongacion_sol': e['elongacion_sol'],
+            'observable':  e['observable'],
+            'nota':        nota,
+            'cuenta_regresiva': cuenta_regresiva(e['fecha_utc']),
+        })
+    return resultado
+
 
 if __name__ == '__main__':
-    print('\nPróximas conjunciones planetarias (próximos 90 días):\n')
-    conj = proximas_conjunciones()
-    if not conj:
-        print('  Ninguna conjunción notable en los próximos 90 días.')
-    else:
-        for c in conj:
-            cr = c['cuenta_regresiva']['texto']
-            print(f"  {c['planeta1']} + {c['planeta2']:<10}  separación: {c['separacion']}°  —  {c['fecha_local']}  ({cr})")
+    print(f'\nConjunciones (< {SEPARACION_MAX}°) en los próximos {DIAS_ADELANTE} días — {CITY}:\n')
+    for c in proximas_conjunciones():
+        print(f"  {c['fecha_local']}  {c['planeta1']} + {c['planeta2']:<9} {c['separacion']}°  {c['nota']}")

@@ -1,15 +1,46 @@
+# Despliegue en Render (Blueprint). Crea la web + una base de datos PostgreSQL.
 services:
   - type: web
     name: astroalert
-    env: python
+    runtime: python
+    plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    # 1 worker con varios hilos: Skyfield carga las efemérides una vez y el
+    # planificador de alertas corre en un solo proceso.
+    startCommand: gunicorn app:app --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /api/health
     envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: APP_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: astroalert-db
+          property: connectionString
       - key: LAT
-        value: 0.18
+        value: -0.18
       - key: LON
         value: -78.47
       - key: ALT
         value: 2850
       - key: CITY
         value: Quito
+      - key: TZ_NAME
+        value: America/Guayaquil
+      - key: ENABLE_SCHEDULER
+        value: "false"
+      - key: NASA_API_KEY
+        sync: false
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+
+databases:
+  - name: astroalert-db
+    plan: free

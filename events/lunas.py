@@ -1,3 +1,7 @@
+"""Lunas del sistema solar: datos, historia, curiosidades y exploración.
+
+Las imágenes son de Wikimedia Commons (NASA/JPL, dominio público).
+"""
 LUNAS = [
     {
         "id": "luna",
@@ -207,7 +211,7 @@ LUNAS = [
         "exploracion": "Solo la sonda Voyager 2 ha visitado Miranda, en enero de 1986. Las imágenes revelaron una superficie sorprendentemente compleja con terrenos muy diferentes. No hay misiones planificadas actualmente para regresar a Urano."
     },
     {
-        "id": "caronl",
+        "id": "caronte",
         "nombre": "Caronte",
         "planeta": "Plutón",
         "imagen": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Charon_in_True_Color_-_High-Res.jpg/600px-Charon_in_True_Color_-_High-Res.jpg",
@@ -232,54 +236,15 @@ LUNAS = [
 ]
 
 def obtener_lunas():
-    return [{'id': l['id'], 'nombre': l['nombre'], 'planeta': l['planeta'], 'imagen': l['imagen']} for l in LUNAS]
+    return [{'id': luna['id'], 'nombre': luna['nombre'], 'planeta': luna['planeta'], 'imagen': luna['imagen']} for luna in LUNAS]
 
 def obtener_luna(luna_id):
-    for l in LUNAS:
-        if l['id'] == luna_id:
-            return l
+    for luna in LUNAS:
+        if luna['id'] == luna_id:
+            return luna
     return None
-
-import requests as req
-
-NASA_IMAGES = {
-    "luna":     "https://images-api.nasa.gov/search?q=moon+surface&media_type=image",
-    "io":       "https://images-api.nasa.gov/search?q=io+moon+jupiter&media_type=image",
-    "europa":   "https://images-api.nasa.gov/search?q=europa+moon+jupiter&media_type=image",
-    "ganimedes":"https://images-api.nasa.gov/search?q=ganymede+moon&media_type=image",
-    "calisto":  "https://images-api.nasa.gov/search?q=callisto+moon&media_type=image",
-    "titan":    "https://images-api.nasa.gov/search?q=titan+moon+saturn&media_type=image",
-    "encelado": "https://images-api.nasa.gov/search?q=enceladus+moon&media_type=image",
-    "triton":   "https://images-api.nasa.gov/search?q=triton+moon+neptune&media_type=image",
-    "miranda":  "https://images-api.nasa.gov/search?q=miranda+moon+uranus&media_type=image",
-    "caronl":   "https://images-api.nasa.gov/search?q=charon+moon+pluto&media_type=image",
-}
-
-_cache_imagenes = {}
-
-def obtener_imagen_nasa(luna_id):
-    if luna_id in _cache_imagenes:
-        return _cache_imagenes[luna_id]
-    try:
-        url = NASA_IMAGES.get(luna_id)
-        if not url:
-            return None
-        r    = req.get(url, timeout=10)
-        data = r.json()
-        items = data.get('collection', {}).get('items', [])
-        for item in items:
-            links = item.get('links', [])
-            for link in links:
-                if link.get('rel') == 'preview':
-                    img = link.get('href')
-                    _cache_imagenes[luna_id] = img
-                    return img
-    except Exception as e:
-        print(f"Error NASA Images {luna_id}: {e}")
-    return None
-
 
 if __name__ == '__main__':
     print(f'\n{len(LUNAS)} lunas cargadas:\n')
-    for l in LUNAS:
-        print(f"  {l['nombre']:<12}  {l['planeta']}")
+    for luna in LUNAS:
+        print(f"  {luna['nombre']:<12}  {luna['planeta']}")
