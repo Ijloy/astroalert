@@ -3,7 +3,7 @@ import logging
 import os
 
 import requests
-from flask import Flask, jsonify, render_template, request, redirect
+from flask import Flask, jsonify, render_template, request, redirect, abort
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from sqlalchemy import text
@@ -86,6 +86,18 @@ def servicio_externo_caido(nombre):
 # ══════════════════ Web ══════════════════
 @app.route('/')
 def inicio():
+    return render_template('index.html')
+
+
+SECCIONES_WEB = {'iss', 'planetas', 'eclipses', 'conjunciones', 'oposiciones',
+                 'cometas', 'lunas', 'telescopio', 'proximamente'}
+
+
+@app.route('/<seccion>')
+def seccion_web(seccion):
+    # Cada sección tiene su URL (/eclipses, /iss...): el frontend decide qué mostrar.
+    if seccion not in SECCIONES_WEB:
+        abort(404)
     return render_template('index.html')
 
 

@@ -331,6 +331,21 @@ Every screen should feel balanced before adding visual decoration.
 
 ---
 
+# Implementation Tokens
+
+Defined in `static/style.css` (`:root`). The four spacing levels of this document map to the scale:
+
+| Level | Tokens | Values |
+|---|---|---|
+| Micro spacing | `--sp-1`, `--sp-2` | 4px, 8px |
+| Component spacing | `--sp-3`, `--sp-4` | 12px, 16px |
+| Section spacing | `--sp-5`, `--sp-6` | 24px, 32px |
+| Experience spacing | `--sp-7`, `--sp-8` | 48px, 72px |
+
+Radii: `--r-sm` 8px · `--r-md` 12px · `--r-lg` 16px. Minimum touch target: 44px.
+
+---
+
 # Final Statement
 
 Space is one of the most important elements of AstroAlert.
