@@ -411,6 +411,56 @@ Random colors should never be introduced.
 
 ---
 
+---
+
+# Palette: Cosmic Nebula
+
+AstroAlert uses the **Cosmic Nebula** palette (30 tones of indigo, violet, orchid, magenta and night blue).
+The tokens live in `static/style.css` (`:root`). Components never use raw hex values; they use the role tokens.
+
+## Readability rule
+
+Contrast was measured (WCAG 2.1) against the main background `#0B0718`.
+Only colors with **≥ 4.5:1** may be used for text. Darker tones are reserved for surfaces, borders and filled buttons with white text.
+
+| Token | Hex | Contrast on background | Allowed use |
+|---|---|---|---|
+| `--nebula-orquidea` | `#BA55D3` | 5.0:1 | Accent text, numbers, links, logo |
+| `--nebula-purpura-medio` | `#9370DB` | 5.3:1 | Secondary accent text, background icons |
+| `--nebula-lavanda` | `#7B68EE` | 4.8:1 | Secondary accent text |
+| `--nebula-rosa` | `#DB7093` | 6.4:1 | Warnings, errors, highlighted text |
+| `--nebula-azul-violeta` | `#8A2BE2` | white on it 6.0:1 | Primary button background |
+| `--nebula-violeta-osc` | `#9400D3` | white on it 6.6:1 | Primary button hover |
+| `--nebula-magenta` | `#C71585` | white on it 5.4:1 | Eclipse badge, gradients |
+| `--nebula-pizarra-media` | `#6A5ACD` | white on it 5.3:1 | Conjunction badge |
+| `--nebula-azul-noche` | `#1E3A5F` | white on it 11.5:1 | Comet badge, nebula atmosphere |
+| `--nebula-indigo` | `#4B0082` | 1.5:1 | Background atmosphere only |
+| `--nebula-indigo-profundo` | `#2C1E5C` | 1.4:1 | Glass surfaces only |
+
+## Role tokens
+
+| Role | Value |
+|---|---|
+| `--fondo` | `#0B0718` (deep indigo, darkened from `#2C1E5C` for long reading) |
+| `--fondo-card` | `rgba(44,30,92,0.22)` |
+| `--borde` | `rgba(147,112,219,0.18)` |
+| `--texto` | `#ECE8F5` |
+| `--texto-sub` | `rgba(236,232,245,0.62)` |
+| `--acento` | `#BA55D3` |
+| `--primario` | `#8A2BE2` |
+| `--exito` | `#4ade80` (semantic green for "visible"; intentionally outside the palette so it is never confused with an accent) |
+| `--error` | `#DB7093` |
+
+## Gradients
+
+* Hero title: `#9370DB → #BA55D3 → #DB7093`
+* Primary hero button: `#6A0DAD → #8A2BE2 → #C71585`
+* Page atmosphere: very soft radial glows of `#4B0082`, `#1E3A5F` and `#C71585` over `#0B0718`.
+
+Planet colors in illustrations keep their real tones (scientific accuracy over palette).
+
+---
+
 # Final Statement
 
 Color in AstroAlert is not decoration.

@@ -540,7 +540,7 @@ async function calcularTelescopio() {
     const advBox = document.getElementById('tel-advertencias-box');
     if (data.advertencias.length > 0) {
       document.getElementById('tel-advertencias').innerHTML =
-        data.advertencias.map(a => `<div class="curiosidad" style="border-color:rgba(251,113,133,0.4)">${a}</div>`).join('');
+        data.advertencias.map(a => `<div class="curiosidad" style="border-color:rgba(219,112,147,0.45)">${a}</div>`).join('');
       advBox.classList.remove('hidden');
     } else {
       advBox.classList.add('hidden');
